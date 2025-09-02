@@ -1,7 +1,7 @@
-import { RealChatLayout } from "@/components/RealChatLayout";
+import { AnonymousChatLayout } from "@/components/AnonymousChatLayout";
 
 const Index = () => {
-  return <RealChatLayout />;
+  return <AnonymousChatLayout />;
 };
 
 export default Index;
