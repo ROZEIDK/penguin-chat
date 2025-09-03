@@ -3,17 +3,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Send, Hash, Users } from "lucide-react";
+import { Send, Hash, Users, Plus, Globe } from "lucide-react";
 import { useMessages } from "@/hooks/useMessages";
+import { useGroupMessages } from "@/hooks/useGroups";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { GroupModal } from "./GroupModal";
 
 export const AnonymousChatLayout = () => {
   const [inputMessage, setInputMessage] = useState("");
   const [username, setUsername] = useState("");
   const [hasSetUsername, setHasSetUsername] = useState(false);
-  const { messages, loading: messagesLoading, sendMessage } = useMessages();
+  const [currentGroup, setCurrentGroup] = useState<{ id: string; name: string } | null>(null);
+  const [showGroupModal, setShowGroupModal] = useState(false);
+  
+  const { messages: globalMessages, loading: globalLoading, sendMessage: sendGlobalMessage } = useMessages();
+  const { messages: groupMessages, loading: groupLoading, sendMessage: sendGroupMessage } = useGroupMessages(currentGroup?.id || null);
   const { toast } = useToast();
+  
+  const messages = currentGroup ? groupMessages : globalMessages;
+  const messagesLoading = currentGroup ? groupLoading : globalLoading;
+  const sendMessage = currentGroup ? sendGroupMessage : sendGlobalMessage;
 
   useEffect(() => {
     // Check if username was already set in localStorage
@@ -48,6 +58,10 @@ export const AnonymousChatLayout = () => {
         });
       }
     }
+  };
+
+  const handleGroupJoined = (groupId: string, groupName: string) => {
+    setCurrentGroup({ id: groupId, name: groupName });
   };
 
   if (!hasSetUsername) {
@@ -86,10 +100,36 @@ export const AnonymousChatLayout = () => {
         
         <div className="flex-1 p-4">
           <div className="space-y-2">
-            <div className="flex items-center gap-2 p-2 rounded bg-sidebar-accent">
-              <Hash className="w-4 h-4" />
-              <span>general</span>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Servers
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowGroupModal(true)}
+                className="w-6 h-6 p-0"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
             </div>
+            
+            <div 
+              className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${
+                !currentGroup ? 'bg-sidebar-accent' : 'hover:bg-sidebar-accent/50'
+              }`}
+              onClick={() => setCurrentGroup(null)}
+            >
+              <Globe className="w-4 h-4" />
+              <span>Global Chat</span>
+            </div>
+            
+            {currentGroup && (
+              <div className="flex items-center gap-2 p-2 rounded bg-sidebar-accent">
+                <Hash className="w-4 h-4" />
+                <span>{currentGroup.name}</span>
+              </div>
+            )}
           </div>
         </div>
         
@@ -125,11 +165,23 @@ export const AnonymousChatLayout = () => {
         {/* Header */}
         <div className="bg-card border-b border-border p-4">
           <div className="flex items-center gap-2">
-            <Hash className="w-5 h-5 text-muted-foreground" />
-            <h3 className="text-lg font-semibold text-card-foreground">general</h3>
-            <div className="text-sm text-muted-foreground ml-2">
-              Anonymous chatroom - no registration required
-            </div>
+            {currentGroup ? (
+              <>
+                <Hash className="w-5 h-5 text-muted-foreground" />
+                <h3 className="text-lg font-semibold text-card-foreground">{currentGroup.name}</h3>
+                <div className="text-sm text-muted-foreground ml-2">
+                  Private group chat
+                </div>
+              </>
+            ) : (
+              <>
+                <Globe className="w-5 h-5 text-muted-foreground" />
+                <h3 className="text-lg font-semibold text-card-foreground">Global Chat</h3>
+                <div className="text-sm text-muted-foreground ml-2">
+                  Anonymous chatroom - no registration required
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -198,9 +250,19 @@ export const AnonymousChatLayout = () => {
         <div className="p-4">
           <div className="space-y-4">
             <div className="text-sm text-muted-foreground">
-              <p>🌍 Anyone can join</p>
-              <p>💬 No registration needed</p>
-              <p>🔗 Just share the link!</p>
+              {currentGroup ? (
+                <>
+                  <p>🔒 Private group</p>
+                  <p>💬 Invitation only</p>
+                  <p>🛡️ Password protected</p>
+                </>
+              ) : (
+                <>
+                  <p>🌍 Anyone can join</p>
+                  <p>💬 No registration needed</p>
+                  <p>🔗 Just share the link!</p>
+                </>
+              )}
             </div>
             <div className="text-xs text-muted-foreground">
               Messages: {messages.length}
@@ -208,6 +270,12 @@ export const AnonymousChatLayout = () => {
           </div>
         </div>
       </div>
+
+      <GroupModal
+        isOpen={showGroupModal}
+        onClose={() => setShowGroupModal(false)}
+        onGroupJoined={handleGroupJoined}
+      />
     </div>
   );
 };
