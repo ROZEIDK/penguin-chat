@@ -48,9 +48,10 @@ export const useGroups = () => {
         .from('groups')
         .insert([{ name, password_hash: passwordHash }])
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      if (!data) throw new Error('Failed to create group');
       
       await fetchGroups();
       return data;
@@ -66,9 +67,10 @@ export const useGroups = () => {
         .from('groups')
         .select('password_hash')
         .eq('id', groupId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      if (!data) throw new Error('Group not found');
       
       const passwordHash = btoa(password);
       if (data.password_hash !== passwordHash) {
