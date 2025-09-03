@@ -20,6 +20,9 @@ export type Database = {
           created_at: string
           group_id: string
           id: string
+          image_url: string | null
+          message_type: string | null
+          sticker_name: string | null
           username: string
         }
         Insert: {
@@ -27,6 +30,9 @@ export type Database = {
           created_at?: string
           group_id: string
           id?: string
+          image_url?: string | null
+          message_type?: string | null
+          sticker_name?: string | null
           username?: string
         }
         Update: {
@@ -34,6 +40,9 @@ export type Database = {
           created_at?: string
           group_id?: string
           id?: string
+          image_url?: string | null
+          message_type?: string | null
+          sticker_name?: string | null
           username?: string
         }
         Relationships: [
@@ -72,18 +81,27 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          image_url: string | null
+          message_type: string | null
+          sticker_name: string | null
           username: string
         }
         Insert: {
           content: string
           created_at?: string
           id?: string
+          image_url?: string | null
+          message_type?: string | null
+          sticker_name?: string | null
           username?: string
         }
         Update: {
           content?: string
           created_at?: string
           id?: string
+          image_url?: string | null
+          message_type?: string | null
+          sticker_name?: string | null
           username?: string
         }
         Relationships: []

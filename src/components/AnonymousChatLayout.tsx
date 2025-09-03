@@ -3,12 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Send, Hash, Users, Plus, Globe } from "lucide-react";
+import { Send, Hash, Users, Plus, Globe, Image, Smile } from "lucide-react";
 import { useMessages } from "@/hooks/useMessages";
 import { useGroupMessages } from "@/hooks/useGroups";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { GroupModal } from "./GroupModal";
+import { ImageUpload } from "./ImageUpload";
+import { StickerPicker } from "./StickerPicker";
+import { MessageBubble } from "./MessageBubble";
 
 export const AnonymousChatLayout = () => {
   const [inputMessage, setInputMessage] = useState("");
@@ -16,6 +19,9 @@ export const AnonymousChatLayout = () => {
   const [hasSetUsername, setHasSetUsername] = useState(false);
   const [currentGroup, setCurrentGroup] = useState<{ id: string; name: string } | null>(null);
   const [showGroupModal, setShowGroupModal] = useState(false);
+  const [showImageUpload, setShowImageUpload] = useState(false);
+  const [showStickerPicker, setShowStickerPicker] = useState(false);
+  const [pendingImageUrl, setPendingImageUrl] = useState<string | null>(null);
   
   const { messages: globalMessages, loading: globalLoading, sendMessage: sendGlobalMessage } = useMessages();
   const { messages: groupMessages, loading: groupLoading, sendMessage: sendGroupMessage } = useGroupMessages(currentGroup?.id || null);
@@ -48,7 +54,12 @@ export const AnonymousChatLayout = () => {
   const handleSendMessage = async () => {
     if (inputMessage.trim() && username.trim()) {
       try {
-        await sendMessage(inputMessage, username.trim());
+        if (pendingImageUrl) {
+          await sendMessage(inputMessage || "Image", username.trim(), 'image', pendingImageUrl);
+          setPendingImageUrl(null);
+        } else {
+          await sendMessage(inputMessage, username.trim());
+        }
         setInputMessage("");
       } catch (error) {
         toast({
@@ -62,6 +73,24 @@ export const AnonymousChatLayout = () => {
 
   const handleGroupJoined = (groupId: string, groupName: string) => {
     setCurrentGroup({ id: groupId, name: groupName });
+  };
+
+  const handleImageSelect = (imageUrl: string) => {
+    setPendingImageUrl(imageUrl);
+    setShowImageUpload(false);
+  };
+
+  const handleStickerSelect = async (stickerName: string) => {
+    try {
+      await sendMessage("", username.trim(), 'sticker', undefined, stickerName);
+      setShowStickerPicker(false);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to send sticker. Please try again.",
+      });
+    }
   };
 
   if (!hasSetUsername) {
@@ -196,36 +225,72 @@ export const AnonymousChatLayout = () => {
           ) : (
             <div className="space-y-4">
               {messages.map((msg) => (
-                <div key={msg.id} className="flex gap-3 hover:bg-chat-message-hover p-2 rounded">
-                  <Avatar className="w-10 h-10">
-                    <AvatarFallback className="bg-primary text-primary-foreground">
-                      {msg.username?.charAt(0).toUpperCase() || 'A'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-foreground">
-                        {msg.username || 'Anonymous'}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {format(new Date(msg.created_at), 'h:mm a')}
-                      </span>
-                    </div>
-                    <p className="text-foreground">{msg.content}</p>
-                  </div>
-                </div>
+                <MessageBubble key={msg.id} message={msg} />
               ))}
             </div>
           )}
         </ScrollArea>
 
         {/* Input Area */}
-        <div className="border-t border-border p-4 bg-card">
+        <div className="border-t border-border p-4 bg-card space-y-4">
+          {showImageUpload && (
+            <ImageUpload 
+              onImageSelect={handleImageSelect}
+              onClose={() => setShowImageUpload(false)}
+            />
+          )}
+          
+          {showStickerPicker && (
+            <StickerPicker 
+              onStickerSelect={handleStickerSelect}
+              onClose={() => setShowStickerPicker(false)}
+            />
+          )}
+          
+          {pendingImageUrl && (
+            <div className="flex items-center gap-2 p-2 bg-muted rounded">
+              <img src={pendingImageUrl} alt="Pending" className="w-8 h-8 rounded" />
+              <span className="text-sm text-muted-foreground">Image ready to send</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setPendingImageUrl(null)}
+                className="ml-auto"
+              >
+                Remove
+              </Button>
+            </div>
+          )}
+          
           <div className="flex gap-2">
+            <div className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setShowImageUpload(!showImageUpload);
+                  setShowStickerPicker(false);
+                }}
+                className={showImageUpload ? "bg-muted" : ""}
+              >
+                <Image className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setShowStickerPicker(!showStickerPicker);
+                  setShowImageUpload(false);
+                }}
+                className={showStickerPicker ? "bg-muted" : ""}
+              >
+                <Smile className="w-4 h-4" />
+              </Button>
+            </div>
             <Input
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              placeholder={`Message as ${username}...`}
+              placeholder={pendingImageUrl ? "Add a caption..." : `Message as ${username}...`}
               className="flex-1"
               onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
             />

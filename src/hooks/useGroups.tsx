@@ -13,6 +13,9 @@ export interface GroupMessage {
   content: string;
   username: string;
   created_at: string;
+  message_type?: 'text' | 'image' | 'sticker';
+  image_url?: string;
+  sticker_name?: string;
 }
 
 export const useGroups = () => {
@@ -134,7 +137,7 @@ export const useGroupMessages = (groupId: string | null) => {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setMessages(data || []);
+      setMessages((data || []) as GroupMessage[]);
     } catch (error) {
       console.error('Error fetching group messages:', error);
     } finally {
@@ -142,17 +145,28 @@ export const useGroupMessages = (groupId: string | null) => {
     }
   };
 
-  const sendMessage = async (content: string, username: string) => {
+  const sendMessage = async (content: string, username: string, messageType: 'text' | 'image' | 'sticker' = 'text', imageUrl?: string, stickerName?: string) => {
     if (!groupId) return;
     
     try {
+      const messageData: any = {
+        group_id: groupId,
+        content,
+        username,
+        message_type: messageType,
+      };
+      
+      if (messageType === 'image' && imageUrl) {
+        messageData.image_url = imageUrl;
+      }
+      
+      if (messageType === 'sticker' && stickerName) {
+        messageData.sticker_name = stickerName;
+      }
+
       const { error } = await supabase
         .from('group_messages')
-        .insert([{
-          group_id: groupId,
-          content,
-          username,
-        }]);
+        .insert([messageData]);
 
       if (error) throw error;
     } catch (error) {

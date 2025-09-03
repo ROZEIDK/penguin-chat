@@ -6,6 +6,9 @@ export interface Message {
   content: string;
   username: string;
   created_at: string;
+  message_type?: 'text' | 'image' | 'sticker';
+  image_url?: string;
+  sticker_name?: string;
 }
 
 export const useMessages = () => {
@@ -40,7 +43,7 @@ export const useMessages = () => {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setMessages(data || []);
+      setMessages((data || []) as Message[]);
     } catch (error) {
       console.error('Error fetching messages:', error);
     } finally {
@@ -48,16 +51,25 @@ export const useMessages = () => {
     }
   };
 
-  const sendMessage = async (content: string, username: string) => {
+  const sendMessage = async (content: string, username: string, messageType: 'text' | 'image' | 'sticker' = 'text', imageUrl?: string, stickerName?: string) => {
     try {
+      const messageData: any = {
+        content,
+        username,
+        message_type: messageType,
+      };
+      
+      if (messageType === 'image' && imageUrl) {
+        messageData.image_url = imageUrl;
+      }
+      
+      if (messageType === 'sticker' && stickerName) {
+        messageData.sticker_name = stickerName;
+      }
+
       const { error } = await supabase
         .from('messages')
-        .insert([
-          {
-            content,
-            username,
-          },
-        ]);
+        .insert([messageData]);
 
       if (error) throw error;
     } catch (error) {
