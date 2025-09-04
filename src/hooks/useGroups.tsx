@@ -5,6 +5,8 @@ export interface Group {
   id: string;
   name: string;
   created_at: string;
+  is_public: boolean;
+  password_hash?: string;
 }
 
 export interface GroupMessage {
@@ -30,7 +32,7 @@ export const useGroups = () => {
     try {
       const { data, error } = await supabase
         .from('groups')
-        .select('id, name, created_at')
+        .select('id, name, created_at, is_public, password_hash')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -42,14 +44,21 @@ export const useGroups = () => {
     }
   };
 
-  const createGroup = async (name: string, password: string) => {
+  const createGroup = async (name: string, password: string | null, isPublic: boolean = false) => {
     try {
-      // Simple password hashing (in production, use proper bcrypt)
-      const passwordHash = btoa(password);
+      const groupData: any = { 
+        name, 
+        is_public: isPublic 
+      };
+      
+      if (password && !isPublic) {
+        // Simple password hashing (in production, use proper bcrypt)
+        groupData.password_hash = btoa(password);
+      }
       
       const { data, error } = await supabase
         .from('groups')
-        .insert([{ name, password_hash: passwordHash }])
+        .insert([groupData])
         .select()
         .maybeSingle();
 
@@ -64,16 +73,26 @@ export const useGroups = () => {
     }
   };
 
-  const joinGroup = async (groupId: string, password: string) => {
+  const joinGroup = async (groupId: string, password?: string) => {
     try {
       const { data, error } = await supabase
         .from('groups')
-        .select('password_hash')
+        .select('password_hash, is_public')
         .eq('id', groupId)
         .maybeSingle();
 
       if (error) throw error;
       if (!data) throw new Error('Group not found');
+      
+      // Public groups don't require password
+      if (data.is_public) {
+        return true;
+      }
+      
+      // Private groups require password
+      if (!password) {
+        throw new Error('Password required for private group');
+      }
       
       const passwordHash = btoa(password);
       if (data.password_hash !== passwordHash) {

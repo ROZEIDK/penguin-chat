@@ -14,6 +14,114 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookmarks: {
+        Row: {
+          created_at: string
+          favicon: string | null
+          folder_name: string | null
+          id: string
+          position: number | null
+          title: string
+          updated_at: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          favicon?: string | null
+          folder_name?: string | null
+          id?: string
+          position?: number | null
+          title: string
+          updated_at?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          favicon?: string | null
+          folder_name?: string | null
+          id?: string
+          position?: number | null
+          title?: string
+          updated_at?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      browsing_history: {
+        Row: {
+          created_at: string
+          favicon: string | null
+          id: string
+          last_visited: string
+          title: string
+          url: string
+          user_id: string
+          visit_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          favicon?: string | null
+          id?: string
+          last_visited?: string
+          title: string
+          url: string
+          user_id: string
+          visit_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          favicon?: string | null
+          id?: string
+          last_visited?: string
+          title?: string
+          url?: string
+          user_id?: string
+          visit_count?: number | null
+        }
+        Relationships: []
+      }
+      downloads: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          filename: string
+          id: string
+          mime_type: string | null
+          progress: number | null
+          size_bytes: number | null
+          status: string | null
+          url: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          filename: string
+          id?: string
+          mime_type?: string | null
+          progress?: number | null
+          size_bytes?: number | null
+          status?: string | null
+          url: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          filename?: string
+          id?: string
+          mime_type?: string | null
+          progress?: number | null
+          size_bytes?: number | null
+          status?: string | null
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       group_messages: {
         Row: {
           content: string
@@ -59,20 +167,23 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_public: boolean
           name: string
-          password_hash: string
+          password_hash: string | null
         }
         Insert: {
           created_at?: string
           id?: string
+          is_public?: boolean
           name: string
-          password_hash: string
+          password_hash?: string | null
         }
         Update: {
           created_at?: string
           id?: string
+          is_public?: boolean
           name?: string
-          password_hash?: string
+          password_hash?: string | null
         }
         Relationships: []
       }
@@ -106,6 +217,156 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          is_active: boolean | null
+          profile_type: Database["public"]["Enums"]["profile_type"] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          profile_type?: Database["public"]["Enums"]["profile_type"] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          profile_type?: Database["public"]["Enums"]["profile_type"] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      reading_list: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          is_read: boolean | null
+          read_time: string | null
+          site_name: string | null
+          title: string
+          updated_at: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          read_time?: string | null
+          site_name?: string | null
+          title: string
+          updated_at?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          read_time?: string | null
+          site_name?: string | null
+          title?: string
+          updated_at?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tab_groups: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          is_collapsed: boolean | null
+          name: string
+          tabs: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color: string
+          created_at?: string
+          id?: string
+          is_collapsed?: boolean | null
+          name: string
+          tabs?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          is_collapsed?: boolean | null
+          name?: string
+          tabs?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          block_fingerprinting: boolean | null
+          block_third_party_cookies: boolean | null
+          block_trackers: boolean | null
+          created_at: string
+          id: string
+          search_engine: string | null
+          send_do_not_track: boolean | null
+          startup_behavior: string | null
+          startup_urls: string[] | null
+          theme: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          block_fingerprinting?: boolean | null
+          block_third_party_cookies?: boolean | null
+          block_trackers?: boolean | null
+          created_at?: string
+          id?: string
+          search_engine?: string | null
+          send_do_not_track?: boolean | null
+          startup_behavior?: string | null
+          startup_urls?: string[] | null
+          theme?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          block_fingerprinting?: boolean | null
+          block_third_party_cookies?: boolean | null
+          block_trackers?: boolean | null
+          created_at?: string
+          id?: string
+          search_engine?: string | null
+          send_do_not_track?: boolean | null
+          startup_behavior?: string | null
+          startup_urls?: string[] | null
+          theme?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -114,7 +375,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      profile_type: "personal" | "work" | "development" | "custom"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -241,6 +502,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      profile_type: ["personal", "work", "development", "custom"],
+    },
   },
 } as const
