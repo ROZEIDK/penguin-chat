@@ -12,6 +12,8 @@ import { GroupModal } from "./GroupModal";
 import { ImageUpload } from "./ImageUpload";
 import { StickerPicker } from "./StickerPicker";
 import { MessageBubble } from "./MessageBubble";
+import { UserProfileDialog } from "./UserProfileDialog";
+import { UserSettingsDialog } from "./UserSettingsDialog";
 
 export const AnonymousChatLayout = () => {
   const [inputMessage, setInputMessage] = useState("");
@@ -164,15 +166,12 @@ export const AnonymousChatLayout = () => {
         
         <div className="p-4 border-t border-sidebar-border">
           <div className="flex items-center gap-2">
-            <Avatar className="w-8 h-8">
-              <AvatarFallback className="bg-primary text-primary-foreground">
-                {username.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div>
+            <UserProfileDialog />
+            <div className="flex-1">
               <div className="text-sm font-medium">{username}</div>
               <div className="text-xs text-muted-foreground">online</div>
             </div>
+            <UserSettingsDialog />
           </div>
           <Button
             variant="ghost"
