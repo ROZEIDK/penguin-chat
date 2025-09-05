@@ -9,6 +9,7 @@ export interface Message {
   message_type?: 'text' | 'image' | 'sticker';
   image_url?: string;
   sticker_name?: string;
+  avatar_url?: string;
 }
 
 export const useMessages = () => {
@@ -53,10 +54,19 @@ export const useMessages = () => {
 
   const sendMessage = async (content: string, username: string, messageType: 'text' | 'image' | 'sticker' = 'text', imageUrl?: string, stickerName?: string) => {
     try {
+      // Get user profile for avatar
+      const userProfile = localStorage.getItem('user-profile');
+      let avatarUrl = null;
+      if (userProfile) {
+        const profile = JSON.parse(userProfile);
+        avatarUrl = profile.avatarUrl;
+      }
+
       const messageData: any = {
         content,
         username,
         message_type: messageType,
+        avatar_url: avatarUrl,
       };
       
       if (messageType === 'image' && imageUrl) {

@@ -73,6 +73,13 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
   return (
     <div className="flex gap-3 hover:bg-chat-message-hover p-2 rounded">
       <Avatar className="w-10 h-10">
+        {message.avatar_url && (
+          <img 
+            src={message.avatar_url} 
+            alt={`${message.username}'s avatar`}
+            className="w-full h-full object-cover rounded-full"
+          />
+        )}
         <AvatarFallback className="bg-primary text-primary-foreground">
           {message.username?.charAt(0).toUpperCase() || 'A'}
         </AvatarFallback>

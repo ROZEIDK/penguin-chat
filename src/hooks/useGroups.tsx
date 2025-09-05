@@ -18,6 +18,7 @@ export interface GroupMessage {
   message_type?: 'text' | 'image' | 'sticker';
   image_url?: string;
   sticker_name?: string;
+  avatar_url?: string;
 }
 
 export const useGroups = () => {
@@ -168,11 +169,20 @@ export const useGroupMessages = (groupId: string | null) => {
     if (!groupId) return;
     
     try {
+      // Get user profile for avatar
+      const userProfile = localStorage.getItem('user-profile');
+      let avatarUrl = null;
+      if (userProfile) {
+        const profile = JSON.parse(userProfile);
+        avatarUrl = profile.avatarUrl;
+      }
+
       const messageData: any = {
         group_id: groupId,
         content,
         username,
         message_type: messageType,
+        avatar_url: avatarUrl,
       };
       
       if (messageType === 'image' && imageUrl) {

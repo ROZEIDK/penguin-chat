@@ -124,6 +124,7 @@ export type Database = {
       }
       group_messages: {
         Row: {
+          avatar_url: string | null
           content: string
           created_at: string
           group_id: string
@@ -134,6 +135,7 @@ export type Database = {
           username: string
         }
         Insert: {
+          avatar_url?: string | null
           content: string
           created_at?: string
           group_id: string
@@ -144,6 +146,7 @@ export type Database = {
           username?: string
         }
         Update: {
+          avatar_url?: string | null
           content?: string
           created_at?: string
           group_id?: string
@@ -189,6 +192,7 @@ export type Database = {
       }
       messages: {
         Row: {
+          avatar_url: string | null
           content: string
           created_at: string
           id: string
@@ -198,6 +202,7 @@ export type Database = {
           username: string
         }
         Insert: {
+          avatar_url?: string | null
           content: string
           created_at?: string
           id?: string
@@ -207,6 +212,7 @@ export type Database = {
           username?: string
         }
         Update: {
+          avatar_url?: string | null
           content?: string
           created_at?: string
           id?: string
