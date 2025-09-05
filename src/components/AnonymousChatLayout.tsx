@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Send, Hash, Users, Plus, Globe, Image, Smile } from "lucide-react";
+import { Send, Hash, Users, Plus, Globe, Image, Smile, X, Crown } from "lucide-react";
 import { useMessages } from "@/hooks/useMessages";
-import { useGroupMessages } from "@/hooks/useGroups";
+import { useGroups, useGroupMessages } from "@/hooks/useGroups";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { GroupModal } from "./GroupModal";
@@ -14,6 +14,7 @@ import { StickerPicker } from "./StickerPicker";
 import { MessageBubble } from "./MessageBubble";
 import { UserProfileDialog } from "./UserProfileDialog";
 import { UserSettingsDialog } from "./UserSettingsDialog";
+import { ServerSettingsDialog } from "./ServerSettingsDialog";
 
 export const AnonymousChatLayout = () => {
   const [inputMessage, setInputMessage] = useState("");
@@ -27,6 +28,7 @@ export const AnonymousChatLayout = () => {
   
   const { messages: globalMessages, loading: globalLoading, sendMessage: sendGlobalMessage } = useMessages();
   const { messages: groupMessages, loading: groupLoading, sendMessage: sendGroupMessage } = useGroupMessages(currentGroup?.id || null);
+  const { joinedGroups, leaveGroup, refetch: refetchGroups } = useGroups();
   const { toast } = useToast();
   
   const messages = currentGroup ? groupMessages : globalMessages;
@@ -35,7 +37,7 @@ export const AnonymousChatLayout = () => {
 
   useEffect(() => {
     // Check if username was already set in localStorage
-    const savedUsername = localStorage.getItem('chatroom-username');
+    const savedUsername = localStorage.getItem('chat-username');
     if (savedUsername) {
       setUsername(savedUsername);
       setHasSetUsername(true);
@@ -44,7 +46,7 @@ export const AnonymousChatLayout = () => {
 
   const handleSetUsername = () => {
     if (username.trim()) {
-      localStorage.setItem('chatroom-username', username.trim());
+      localStorage.setItem('chat-username', username.trim());
       setHasSetUsername(true);
       toast({
         title: "Welcome to the chatroom!",
@@ -75,6 +77,28 @@ export const AnonymousChatLayout = () => {
 
   const handleGroupJoined = (groupId: string, groupName: string) => {
     setCurrentGroup({ id: groupId, name: groupName });
+    refetchGroups(); // Refresh joined groups list
+  };
+
+  const handleLeaveGroup = async (groupId: string, groupName: string) => {
+    try {
+      await leaveGroup(groupId);
+      toast({
+        title: "Left group",
+        description: `You've left "${groupName}"`,
+      });
+      
+      // If we're currently in this group, switch to global chat
+      if (currentGroup?.id === groupId) {
+        setCurrentGroup(null);
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error", 
+        description: "Failed to leave group. Please try again.",
+      });
+    }
   };
 
   const handleImageSelect = (imageUrl: string) => {
@@ -155,7 +179,45 @@ export const AnonymousChatLayout = () => {
               <span>Global Chat</span>
             </div>
             
-            {currentGroup && (
+            {joinedGroups.map((group) => (
+              <div 
+                key={group.id}
+                className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors group ${
+                  currentGroup?.id === group.id ? 'bg-sidebar-accent' : 'hover:bg-sidebar-accent/50'
+                }`}
+                onClick={() => setCurrentGroup({ id: group.id, name: group.name })}
+              >
+                <Hash className="w-4 h-4" />
+                <span className="flex-1 truncate">{group.name}</span>
+                {group.owner_id === username && (
+                  <div title="You own this server">
+                    <Crown className="w-3 h-3 text-yellow-500" />
+                  </div>
+                )}
+                <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
+                  {group.owner_id === username && (
+                    <ServerSettingsDialog 
+                      group={group}
+                      onUpdate={refetchGroups}
+                    />
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 ml-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleLeaveGroup(group.id, group.name);
+                    }}
+                    title="Leave server"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+            
+            {currentGroup && !joinedGroups.find(g => g.id === currentGroup.id) && (
               <div className="flex items-center gap-2 p-2 rounded bg-sidebar-accent">
                 <Hash className="w-4 h-4" />
                 <span>{currentGroup.name}</span>
@@ -173,11 +235,11 @@ export const AnonymousChatLayout = () => {
             </div>
             <UserSettingsDialog />
           </div>
-          <Button
+            <Button
             variant="ghost"
             size="sm"
             onClick={() => {
-              localStorage.removeItem('chatroom-username');
+              localStorage.removeItem('chat-username');
               setHasSetUsername(false);
               setUsername('');
             }}

@@ -122,6 +122,41 @@ export type Database = {
         }
         Relationships: []
       }
+      group_members: {
+        Row: {
+          group_id: string
+          id: string
+          is_active: boolean | null
+          joined_at: string
+          user_id: string
+          username: string
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string
+          user_id: string
+          username: string
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string
+          user_id?: string
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_messages: {
         Row: {
           avatar_url: string | null
@@ -172,6 +207,7 @@ export type Database = {
           id: string
           is_public: boolean
           name: string
+          owner_id: string | null
           password_hash: string | null
         }
         Insert: {
@@ -179,6 +215,7 @@ export type Database = {
           id?: string
           is_public?: boolean
           name: string
+          owner_id?: string | null
           password_hash?: string | null
         }
         Update: {
@@ -186,6 +223,7 @@ export type Database = {
           id?: string
           is_public?: boolean
           name?: string
+          owner_id?: string | null
           password_hash?: string | null
         }
         Relationships: []

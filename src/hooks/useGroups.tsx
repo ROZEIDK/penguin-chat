@@ -7,6 +7,7 @@ export interface Group {
   created_at: string;
   is_public: boolean;
   password_hash?: string;
+  owner_id?: string;
 }
 
 export interface GroupMessage {
@@ -23,17 +24,19 @@ export interface GroupMessage {
 
 export const useGroups = () => {
   const [groups, setGroups] = useState<Group[]>([]);
+  const [joinedGroups, setJoinedGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchGroups();
+    fetchJoinedGroups();
   }, []);
 
   const fetchGroups = async () => {
     try {
       const { data, error } = await supabase
         .from('groups')
-        .select('id, name, created_at, is_public, password_hash')
+        .select('id, name, created_at, is_public, password_hash, owner_id')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -45,11 +48,38 @@ export const useGroups = () => {
     }
   };
 
+  const fetchJoinedGroups = async () => {
+    try {
+      const username = localStorage.getItem('chat-username');
+      if (!username) return;
+
+      const { data, error } = await supabase
+        .from('group_members')
+        .select(`
+          group_id,
+          groups!inner(id, name, created_at, is_public, password_hash, owner_id)
+        `)
+        .eq('username', username)
+        .eq('is_active', true);
+
+      if (error) throw error;
+      
+      const joinedGroupsData = data?.map(item => item.groups).filter(Boolean) || [];
+      setJoinedGroups(joinedGroupsData as Group[]);
+    } catch (error) {
+      console.error('Error fetching joined groups:', error);
+    }
+  };
+
   const createGroup = async (name: string, password: string | null, isPublic: boolean = false) => {
     try {
+      const username = localStorage.getItem('chat-username');
+      if (!username) throw new Error('Username required');
+
       const groupData: any = { 
         name, 
-        is_public: isPublic 
+        is_public: isPublic,
+        owner_id: username
       };
       
       if (password && !isPublic) {
@@ -66,7 +96,17 @@ export const useGroups = () => {
       if (error) throw error;
       if (!data) throw new Error('Failed to create group');
       
+      // Automatically join the creator to the group
+      await supabase
+        .from('group_members')
+        .insert([{
+          group_id: data.id,
+          user_id: username,
+          username: username
+        }]);
+      
       await fetchGroups();
+      await fetchJoinedGroups();
       return data;
     } catch (error) {
       console.error('Error creating group:', error);
@@ -76,6 +116,9 @@ export const useGroups = () => {
 
   const joinGroup = async (groupId: string, password?: string) => {
     try {
+      const username = localStorage.getItem('chat-username');
+      if (!username) throw new Error('Username required');
+
       const { data, error } = await supabase
         .from('groups')
         .select('password_hash, is_public')
@@ -87,6 +130,17 @@ export const useGroups = () => {
       
       // Public groups don't require password
       if (data.is_public) {
+        // Add user to group members
+        await supabase
+          .from('group_members')
+          .upsert([{
+            group_id: groupId,
+            user_id: username,
+            username: username,
+            is_active: true
+          }], { onConflict: 'group_id,user_id' });
+        
+        await fetchJoinedGroups();
         return true;
       }
       
@@ -100,6 +154,17 @@ export const useGroups = () => {
         throw new Error('Invalid password');
       }
       
+      // Add user to group members
+      await supabase
+        .from('group_members')
+        .upsert([{
+          group_id: groupId,
+          user_id: username,
+          username: username,
+          is_active: true
+        }], { onConflict: 'group_id,user_id' });
+      
+      await fetchJoinedGroups();
       return true;
     } catch (error) {
       console.error('Error joining group:', error);
@@ -107,12 +172,36 @@ export const useGroups = () => {
     }
   };
 
+  const leaveGroup = async (groupId: string) => {
+    try {
+      const username = localStorage.getItem('chat-username');
+      if (!username) throw new Error('Username required');
+
+      await supabase
+        .from('group_members')
+        .update({ is_active: false })
+        .eq('group_id', groupId)
+        .eq('user_id', username);
+      
+      await fetchJoinedGroups();
+      return true;
+    } catch (error) {
+      console.error('Error leaving group:', error);
+      throw error;
+    }
+  };
+
   return {
     groups,
+    joinedGroups,
     loading,
     createGroup,
     joinGroup,
-    refetch: fetchGroups,
+    leaveGroup,
+    refetch: () => {
+      fetchGroups();
+      fetchJoinedGroups();
+    },
   };
 };
 
