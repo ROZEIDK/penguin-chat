@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -10,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 export function UserProfileDialog() {
   const [displayName, setDisplayName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [bio, setBio] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -20,6 +22,7 @@ export function UserProfileDialog() {
       const profile = JSON.parse(stored);
       setDisplayName(profile.displayName || "");
       setAvatarUrl(profile.avatarUrl || "");
+      setBio(profile.bio || "");
     }
   }, []);
 
@@ -29,6 +32,7 @@ export function UserProfileDialog() {
       const profileData = {
         displayName,
         avatarUrl,
+        bio,
         updatedAt: new Date().toISOString()
       };
 
@@ -110,6 +114,22 @@ export function UserProfileDialog() {
               placeholder="Enter your display name"
               className="bg-input border-border text-foreground"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="bio" className="text-card-foreground">Bio</Label>
+            <Textarea
+              id="bio"
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="Tell us about yourself..."
+              className="bg-input border-border text-foreground resize-none"
+              rows={3}
+              maxLength={200}
+            />
+            <p className="text-xs text-muted-foreground text-right">
+              {bio.length}/200
+            </p>
           </div>
 
           <Button 

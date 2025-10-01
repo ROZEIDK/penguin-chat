@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Send, Hash, Users, Plus, Globe, Image, Smile, X, Crown } from "lucide-react";
 import { useMessages } from "@/hooks/useMessages";
 import { useGroups, useGroupMessages } from "@/hooks/useGroups";
+import { useConversations } from "@/hooks/useDirectMessages";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { GroupModal } from "./GroupModal";
@@ -15,6 +16,8 @@ import { MessageBubble } from "./MessageBubble";
 import { UserProfileDialog } from "./UserProfileDialog";
 import { UserSettingsDialog } from "./UserSettingsDialog";
 import { ServerSettingsDialog } from "./ServerSettingsDialog";
+import { UserProfileView } from "./UserProfileView";
+import { DirectMessagesSidebar } from "./DirectMessagesSidebar";
 
 export const AnonymousChatLayout = () => {
   const [inputMessage, setInputMessage] = useState("");
@@ -25,10 +28,14 @@ export const AnonymousChatLayout = () => {
   const [showImageUpload, setShowImageUpload] = useState(false);
   const [showStickerPicker, setShowStickerPicker] = useState(false);
   const [pendingImageUrl, setPendingImageUrl] = useState<string | null>(null);
+  const [selectedUserProfile, setSelectedUserProfile] = useState<{ username: string; avatarUrl?: string } | null>(null);
+  const [showUserProfile, setShowUserProfile] = useState(false);
+  const [activeDMConversation, setActiveDMConversation] = useState<{ id: string; username: string; avatarUrl?: string } | null>(null);
   
   const { messages: globalMessages, loading: globalLoading, sendMessage: sendGlobalMessage } = useMessages();
   const { messages: groupMessages, loading: groupLoading, sendMessage: sendGroupMessage } = useGroupMessages(currentGroup?.id || null);
   const { joinedGroups, leaveGroup, refetch: refetchGroups } = useGroups();
+  const { createConversation } = useConversations(username);
   const { toast } = useToast();
   
   const messages = currentGroup ? groupMessages : globalMessages;
@@ -115,6 +122,26 @@ export const AnonymousChatLayout = () => {
         variant: "destructive",
         title: "Error",
         description: "Failed to send sticker. Please try again.",
+      });
+    }
+  };
+
+  const handleUsernameClick = (clickedUsername: string, avatarUrl?: string) => {
+    if (clickedUsername === username) return; // Don't open profile for self
+    
+    setSelectedUserProfile({ username: clickedUsername, avatarUrl });
+    setShowUserProfile(true);
+  };
+
+  const handleSendDirectMessage = async () => {
+    if (!selectedUserProfile) return;
+    
+    const conversation = await createConversation(selectedUserProfile.username);
+    if (conversation) {
+      setActiveDMConversation({
+        id: conversation.id,
+        username: selectedUserProfile.username,
+        avatarUrl: selectedUserProfile.avatarUrl,
       });
     }
   };
@@ -286,7 +313,11 @@ export const AnonymousChatLayout = () => {
           ) : (
             <div className="space-y-4">
               {messages.map((msg) => (
-                <MessageBubble key={msg.id} message={msg} />
+                <MessageBubble 
+                  key={msg.id} 
+                  message={msg} 
+                  onUsernameClick={handleUsernameClick}
+                />
               ))}
             </div>
           )}
@@ -362,46 +393,72 @@ export const AnonymousChatLayout = () => {
         </div>
       </div>
 
-      {/* Right Sidebar - Stats */}
-      <div className="w-64 bg-card border-l border-border">
-        <div className="p-4 border-b border-border">
-          <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-muted-foreground" />
-            <h3 className="font-semibold text-card-foreground">
-              Anonymous Chat
-            </h3>
-          </div>
-        </div>
-        
-        <div className="p-4">
-          <div className="space-y-4">
-            <div className="text-sm text-muted-foreground">
-              {currentGroup ? (
-                <>
-                  <p>🔒 Private group</p>
-                  <p>💬 Invitation only</p>
-                  <p>🛡️ Password protected</p>
-                </>
-              ) : (
-                <>
-                  <p>🌍 Anyone can join</p>
-                  <p>💬 No registration needed</p>
-                  <p>🔗 Just share the link!</p>
-                </>
-              )}
-            </div>
-            <div className="text-xs text-muted-foreground">
-              Messages: {messages.length}
+      {/* Right Sidebar - DMs or Stats */}
+      {activeDMConversation ? (
+        <DirectMessagesSidebar
+          conversationId={activeDMConversation.id}
+          otherUsername={activeDMConversation.username}
+          otherUserAvatar={activeDMConversation.avatarUrl}
+          currentUserId={username}
+          onClose={() => setActiveDMConversation(null)}
+        />
+      ) : (
+        <div className="w-64 bg-card border-l border-border">
+          <div className="p-4 border-b border-border">
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-muted-foreground" />
+              <h3 className="font-semibold text-card-foreground">
+                Anonymous Chat
+              </h3>
             </div>
           </div>
+          
+          <div className="p-4">
+            <div className="space-y-4">
+              <div className="text-sm text-muted-foreground">
+                {currentGroup ? (
+                  <>
+                    <p>🔒 Private group</p>
+                    <p>💬 Invitation only</p>
+                    <p>🛡️ Password protected</p>
+                  </>
+                ) : (
+                  <>
+                    <p>🌍 Anyone can join</p>
+                    <p>💬 No registration needed</p>
+                    <p>🔗 Just share the link!</p>
+                  </>
+                )}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Messages: {messages.length}
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       <GroupModal
         isOpen={showGroupModal}
         onClose={() => setShowGroupModal(false)}
         onGroupJoined={handleGroupJoined}
       />
+
+      {selectedUserProfile && (
+        <UserProfileView
+          isOpen={showUserProfile}
+          onClose={() => {
+            setShowUserProfile(false);
+            setSelectedUserProfile(null);
+          }}
+          profile={{
+            username: selectedUserProfile.username,
+            avatarUrl: selectedUserProfile.avatarUrl,
+            bio: undefined, // Bio would need to be fetched from localStorage or database
+          }}
+          onSendMessage={handleSendDirectMessage}
+        />
+      )}
     </div>
   );
 };

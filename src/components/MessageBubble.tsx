@@ -6,6 +6,7 @@ import { GroupMessage } from "@/hooks/useGroups";
 
 interface MessageBubbleProps {
   message: Message | GroupMessage;
+  onUsernameClick?: (username: string, avatarUrl?: string) => void;
 }
 
 const STICKER_EMOJIS: Record<string, string> = {
@@ -31,7 +32,7 @@ const STICKER_EMOJIS: Record<string, string> = {
   "ghost": "👻",
 };
 
-export const MessageBubble = ({ message }: MessageBubbleProps) => {
+export const MessageBubble = ({ message, onUsernameClick }: MessageBubbleProps) => {
   const renderMessageContent = () => {
     switch (message.message_type || 'text') {
       case 'image':
@@ -86,7 +87,10 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
       </Avatar>
       <div className="flex-1">
         <div className="flex items-center gap-2 mb-1">
-          <span className="font-semibold text-foreground">
+          <span 
+            className="font-semibold text-foreground cursor-pointer hover:underline"
+            onClick={() => onUsernameClick?.(message.username || 'Anonymous', message.avatar_url)}
+          >
             {message.username || 'Anonymous'}
           </span>
           <span className="text-xs text-muted-foreground">
