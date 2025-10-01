@@ -83,6 +83,71 @@ export type Database = {
         }
         Relationships: []
       }
+      direct_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          updated_at: string
+          user1_id: string
+          user2_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user1_id: string
+          user2_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user1_id?: string
+          user2_id?: string
+        }
+        Relationships: []
+      }
+      direct_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          image_url: string | null
+          is_read: boolean | null
+          message_type: string | null
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_read?: boolean | null
+          message_type?: string | null
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_read?: boolean | null
+          message_type?: string | null
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "direct_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "direct_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       downloads: {
         Row: {
           completed_at: string | null
@@ -228,6 +293,48 @@ export type Database = {
         }
         Relationships: []
       }
+      media_uploads: {
+        Row: {
+          created_at: string
+          file_size: number | null
+          file_type: string
+          filename: string
+          id: string
+          mime_type: string | null
+          original_url: string | null
+          storage_path: string
+          updated_at: string
+          upload_source: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_size?: number | null
+          file_type: string
+          filename: string
+          id?: string
+          mime_type?: string | null
+          original_url?: string | null
+          storage_path: string
+          updated_at?: string
+          upload_source: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_size?: number | null
+          file_type?: string
+          filename?: string
+          id?: string
+          mime_type?: string | null
+          original_url?: string | null
+          storage_path?: string
+          updated_at?: string
+          upload_source?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           avatar_url: string | null
@@ -264,6 +371,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          bio: string | null
           created_at: string
           display_name: string | null
           id: string
@@ -274,6 +382,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
@@ -284,6 +393,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
