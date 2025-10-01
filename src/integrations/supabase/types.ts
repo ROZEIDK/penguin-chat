@@ -88,22 +88,22 @@ export type Database = {
           created_at: string
           id: string
           updated_at: string
-          user1_id: string
-          user2_id: string
+          user1_username: string
+          user2_username: string
         }
         Insert: {
           created_at?: string
           id?: string
           updated_at?: string
-          user1_id: string
-          user2_id: string
+          user1_username: string
+          user2_username: string
         }
         Update: {
           created_at?: string
           id?: string
           updated_at?: string
-          user1_id?: string
-          user2_id?: string
+          user1_username?: string
+          user2_username?: string
         }
         Relationships: []
       }
@@ -116,7 +116,7 @@ export type Database = {
           image_url: string | null
           is_read: boolean | null
           message_type: string | null
-          sender_id: string
+          sender_username: string
         }
         Insert: {
           content: string
@@ -126,7 +126,7 @@ export type Database = {
           image_url?: string | null
           is_read?: boolean | null
           message_type?: string | null
-          sender_id: string
+          sender_username: string
         }
         Update: {
           content?: string
@@ -136,7 +136,7 @@ export type Database = {
           image_url?: string | null
           is_read?: boolean | null
           message_type?: string | null
-          sender_id?: string
+          sender_username?: string
         }
         Relationships: [
           {

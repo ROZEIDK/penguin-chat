@@ -399,7 +399,7 @@ export const AnonymousChatLayout = () => {
           conversationId={activeDMConversation.id}
           otherUsername={activeDMConversation.username}
           otherUserAvatar={activeDMConversation.avatarUrl}
-          currentUserId={username}
+          currentUsername={username}
           onClose={() => setActiveDMConversation(null)}
         />
       ) : (

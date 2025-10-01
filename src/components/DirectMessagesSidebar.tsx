@@ -11,7 +11,7 @@ interface DirectMessagesSidebarProps {
   conversationId: string | null;
   otherUsername: string;
   otherUserAvatar?: string;
-  currentUserId: string;
+  currentUsername: string;
   onClose: () => void;
 }
 
@@ -19,7 +19,7 @@ export function DirectMessagesSidebar({
   conversationId, 
   otherUsername, 
   otherUserAvatar,
-  currentUserId,
+  currentUsername,
   onClose 
 }: DirectMessagesSidebarProps) {
   const [inputMessage, setInputMessage] = useState("");
@@ -28,7 +28,7 @@ export function DirectMessagesSidebar({
   const handleSendMessage = async () => {
     if (inputMessage.trim() && conversationId) {
       try {
-        await sendMessage(inputMessage, currentUserId);
+        await sendMessage(inputMessage, currentUsername);
         setInputMessage("");
       } catch (error) {
         console.error('Error sending message:', error);
@@ -81,11 +81,11 @@ export function DirectMessagesSidebar({
             {messages.map((msg) => (
               <div 
                 key={msg.id}
-                className={`flex ${msg.sender_id === currentUserId ? 'justify-end' : 'justify-start'}`}
+                className={`flex ${msg.sender_username === currentUsername ? 'justify-end' : 'justify-start'}`}
               >
                 <div 
                   className={`max-w-[80%] rounded-lg p-2 ${
-                    msg.sender_id === currentUserId 
+                    msg.sender_username === currentUsername 
                       ? 'bg-primary text-primary-foreground' 
                       : 'bg-muted text-foreground'
                   }`}

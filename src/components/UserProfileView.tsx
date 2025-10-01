@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MessageSquare } from "lucide-react";
@@ -22,6 +22,9 @@ export function UserProfileView({ isOpen, onClose, profile, onSendMessage }: Use
       <DialogContent className="sm:max-w-[425px] bg-card">
         <DialogHeader>
           <DialogTitle className="text-card-foreground">User Profile</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            View user profile and send a direct message
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-6">
           <div className="flex flex-col items-center space-y-4">

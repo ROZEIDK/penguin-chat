@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 export interface DirectMessage {
   id: string;
   conversation_id: string;
-  sender_id: string;
+  sender_username: string;
   content: string;
   message_type: 'text' | 'image';
   image_url?: string;
@@ -14,8 +14,8 @@ export interface DirectMessage {
 
 export interface Conversation {
   id: string;
-  user1_id: string;
-  user2_id: string;
+  user1_username: string;
+  user2_username: string;
   created_at: string;
   updated_at: string;
 }
@@ -68,13 +68,13 @@ export const useDirectMessages = (conversationId: string | null) => {
     }
   };
 
-  const sendMessage = async (content: string, senderId: string, messageType: 'text' | 'image' = 'text', imageUrl?: string) => {
+  const sendMessage = async (content: string, senderUsername: string, messageType: 'text' | 'image' = 'text', imageUrl?: string) => {
     if (!conversationId) return;
     
     try {
       const messageData: any = {
         conversation_id: conversationId,
-        sender_id: senderId,
+        sender_username: senderUsername,
         content,
         message_type: messageType,
       };
@@ -101,28 +101,28 @@ export const useDirectMessages = (conversationId: string | null) => {
   };
 };
 
-export const useConversations = (userId: string | null) => {
+export const useConversations = (username: string | null) => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!userId) {
+    if (!username) {
       setConversations([]);
       setLoading(false);
       return;
     }
 
     fetchConversations();
-  }, [userId]);
+  }, [username]);
 
   const fetchConversations = async () => {
-    if (!userId) return;
+    if (!username) return;
     
     try {
       const { data, error } = await supabase
         .from('direct_conversations')
         .select('*')
-        .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
+        .or(`user1_username.eq.${username},user2_username.eq.${username}`)
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
@@ -134,18 +134,18 @@ export const useConversations = (userId: string | null) => {
     }
   };
 
-  const createConversation = async (otherUserId: string) => {
-    if (!userId) return null;
+  const createConversation = async (otherUsername: string) => {
+    if (!username) return null;
     
     try {
-      const [user1, user2] = [userId, otherUserId].sort();
+      const [user1, user2] = [username, otherUsername].sort();
       
       const { data: existing } = await supabase
         .from('direct_conversations')
         .select('*')
-        .eq('user1_id', user1)
-        .eq('user2_id', user2)
-        .single();
+        .eq('user1_username', user1)
+        .eq('user2_username', user2)
+        .maybeSingle();
 
       if (existing) {
         return existing as Conversation;
@@ -153,7 +153,7 @@ export const useConversations = (userId: string | null) => {
 
       const { data, error } = await supabase
         .from('direct_conversations')
-        .insert([{ user1_id: user1, user2_id: user2 }])
+        .insert([{ user1_username: user1, user2_username: user2 }])
         .select()
         .single();
 
