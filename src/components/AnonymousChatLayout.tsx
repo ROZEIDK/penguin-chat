@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Send, Hash, Users, Plus, Globe, Image, Smile, X, Crown } from "lucide-react";
+import { Send, Hash, Users, Plus, Globe, Image, Smile, X, Crown, MessageCircle } from "lucide-react";
 import { useMessages } from "@/hooks/useMessages";
 import { useGroups, useGroupMessages } from "@/hooks/useGroups";
-import { useConversations } from "@/hooks/useDirectMessages";
+import { useConversations, type DirectMessage } from "@/hooks/useDirectMessages";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { GroupModal } from "./GroupModal";
 import { ImageUpload } from "./ImageUpload";
@@ -35,7 +36,7 @@ export const AnonymousChatLayout = () => {
   const { messages: globalMessages, loading: globalLoading, sendMessage: sendGlobalMessage } = useMessages();
   const { messages: groupMessages, loading: groupLoading, sendMessage: sendGroupMessage } = useGroupMessages(currentGroup?.id || null);
   const { joinedGroups, leaveGroup, refetch: refetchGroups } = useGroups();
-  const { createConversation } = useConversations(username);
+  const { conversations, createConversation, refetch: refetchConversations } = useConversations(username);
   const { toast } = useToast();
   
   const messages = currentGroup ? groupMessages : globalMessages;
@@ -50,6 +51,34 @@ export const AnonymousChatLayout = () => {
       setHasSetUsername(true);
     }
   }, []);
+
+  // Listen for new DMs and show notifications
+  useEffect(() => {
+    if (!username) return;
+
+    const channel = supabase
+      .channel('dm-notifications')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'direct_messages' },
+        (payload) => {
+          const newMessage = payload.new as DirectMessage;
+          
+          // Only notify if we're the recipient
+          if (newMessage.sender_username !== username) {
+            toast({
+              title: `New message from ${newMessage.sender_username}`,
+              description: newMessage.message_type === 'text' ? newMessage.content : '📷 Sent an image',
+            });
+            refetchConversations();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [username, toast, refetchConversations]);
 
   const handleSetUsername = () => {
     if (username.trim()) {
@@ -181,78 +210,125 @@ export const AnonymousChatLayout = () => {
           <p className="text-sm text-muted-foreground">Open chatroom for everyone</p>
         </div>
         
-        <div className="flex-1 p-4">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Servers
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowGroupModal(true)}
-                className="w-6 h-6 p-0"
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
-            
-            <div 
-              className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${
-                !currentGroup ? 'bg-sidebar-accent' : 'hover:bg-sidebar-accent/50'
-              }`}
-              onClick={() => setCurrentGroup(null)}
-            >
-              <Globe className="w-4 h-4" />
-              <span>Global Chat</span>
-            </div>
-            
-            {joinedGroups.map((group) => (
-              <div 
-                key={group.id}
-                className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors group ${
-                  currentGroup?.id === group.id ? 'bg-sidebar-accent' : 'hover:bg-sidebar-accent/50'
-                }`}
-                onClick={() => setCurrentGroup({ id: group.id, name: group.name })}
-              >
-                <Hash className="w-4 h-4" />
-                <span className="flex-1 truncate">{group.name}</span>
-                {group.owner_id === username && (
-                  <div title="You own this server">
-                    <Crown className="w-3 h-3 text-yellow-500" />
-                  </div>
-                )}
-                <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
-                  {group.owner_id === username && (
-                    <ServerSettingsDialog 
-                      group={group}
-                      onUpdate={refetchGroups}
-                    />
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0 ml-1"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleLeaveGroup(group.id, group.name);
-                    }}
-                    title="Leave server"
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
+        <ScrollArea className="flex-1 p-4">
+          <div className="space-y-4">
+            {/* Direct Messages Section */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Direct Messages
+                </span>
+              </div>
+              {conversations.length > 0 ? (
+                <div className="space-y-1">
+                  {conversations.map((conv) => {
+                    const otherUsername = conv.user1_username === username ? conv.user2_username : conv.user1_username;
+                    return (
+                      <div
+                        key={conv.id}
+                        className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${
+                          activeDMConversation?.id === conv.id ? 'bg-sidebar-accent' : 'hover:bg-sidebar-accent/50'
+                        }`}
+                        onClick={() => setActiveDMConversation({ id: conv.id, username: otherUsername })}
+                      >
+                        <MessageCircle className="w-4 h-4 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm truncate">{otherUsername}</span>
+                            {conv.unreadCount > 0 && (
+                              <span className="bg-primary text-primary-foreground text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
+                                {conv.unreadCount}
+                              </span>
+                            )}
+                          </div>
+                          {conv.lastMessage && (
+                            <p className="text-xs text-muted-foreground truncate">
+                              {conv.lastMessage}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
+              ) : (
+                <p className="text-xs text-muted-foreground italic px-2">No conversations yet</p>
+              )}
+            </div>
+
+            {/* Servers Section */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Servers
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowGroupModal(true)}
+                  className="w-6 h-6 p-0"
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
               </div>
-            ))}
+              
+              <div 
+                className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${
+                  !currentGroup ? 'bg-sidebar-accent' : 'hover:bg-sidebar-accent/50'
+                }`}
+                onClick={() => setCurrentGroup(null)}
+              >
+                <Globe className="w-4 h-4" />
+                <span>Global Chat</span>
+              </div>
             
-            {currentGroup && !joinedGroups.find(g => g.id === currentGroup.id) && (
-              <div className="flex items-center gap-2 p-2 rounded bg-sidebar-accent">
-                <Hash className="w-4 h-4" />
-                <span>{currentGroup.name}</span>
-              </div>
-            )}
+              {joinedGroups.map((group) => (
+                <div 
+                  key={group.id}
+                  className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors group ${
+                    currentGroup?.id === group.id ? 'bg-sidebar-accent' : 'hover:bg-sidebar-accent/50'
+                  }`}
+                  onClick={() => setCurrentGroup({ id: group.id, name: group.name })}
+                >
+                  <Hash className="w-4 h-4" />
+                  <span className="flex-1 truncate">{group.name}</span>
+                  {group.owner_id === username && (
+                    <div title="You own this server">
+                      <Crown className="w-3 h-3 text-yellow-500" />
+                    </div>
+                  )}
+                  <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
+                    {group.owner_id === username && (
+                      <ServerSettingsDialog 
+                        group={group}
+                        onUpdate={refetchGroups}
+                      />
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 ml-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleLeaveGroup(group.id, group.name);
+                      }}
+                      title="Leave server"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              
+              {currentGroup && !joinedGroups.find(g => g.id === currentGroup.id) && (
+                <div className="flex items-center gap-2 p-2 rounded bg-sidebar-accent">
+                  <Hash className="w-4 h-4" />
+                  <span>{currentGroup.name}</span>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </ScrollArea>
         
         <div className="p-4 border-t border-sidebar-border">
           <div className="flex items-center gap-2">

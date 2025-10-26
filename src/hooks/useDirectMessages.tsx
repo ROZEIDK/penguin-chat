@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 export interface DirectMessage {
   id: string;
@@ -101,8 +102,14 @@ export const useDirectMessages = (conversationId: string | null) => {
   };
 };
 
+export interface ConversationWithUnread extends Conversation {
+  unreadCount: number;
+  lastMessage?: string;
+  lastMessageAt?: string;
+}
+
 export const useConversations = (username: string | null) => {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversations, setConversations] = useState<ConversationWithUnread[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -113,20 +120,64 @@ export const useConversations = (username: string | null) => {
     }
 
     fetchConversations();
+
+    // Listen for new messages in all conversations
+    const channel = supabase
+      .channel('all-dms')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'direct_messages' },
+        () => {
+          fetchConversations(); // Refresh conversations when any new message arrives
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [username]);
 
   const fetchConversations = async () => {
     if (!username) return;
     
     try {
-      const { data, error } = await supabase
+      const { data: convData, error } = await supabase
         .from('direct_conversations')
         .select('*')
         .or(`user1_username.eq.${username},user2_username.eq.${username}`)
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
-      setConversations((data || []) as Conversation[]);
+
+      // Get unread counts and last messages for each conversation
+      const conversationsWithUnread = await Promise.all(
+        (convData || []).map(async (conv) => {
+          const { data: messages } = await supabase
+            .from('direct_messages')
+            .select('*')
+            .eq('conversation_id', conv.id)
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+          const { count } = await supabase
+            .from('direct_messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('conversation_id', conv.id)
+            .eq('is_read', false)
+            .neq('sender_username', username);
+
+          const lastMessage = messages?.[0];
+
+          return {
+            ...conv,
+            unreadCount: count || 0,
+            lastMessage: lastMessage?.content,
+            lastMessageAt: lastMessage?.created_at,
+          } as ConversationWithUnread;
+        })
+      );
+
+      setConversations(conversationsWithUnread);
     } catch (error) {
       console.error('Error fetching conversations:', error);
     } finally {
