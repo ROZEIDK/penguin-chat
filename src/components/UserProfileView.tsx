@@ -56,10 +56,7 @@ export function UserProfileView({ isOpen, onClose, profile, onSendMessage }: Use
           )}
 
           <Button 
-            onClick={() => {
-              onSendMessage();
-              onClose();
-            }}
+            onClick={onSendMessage}
             className="w-full gap-2"
           >
             <MessageSquare className="h-4 w-4" />

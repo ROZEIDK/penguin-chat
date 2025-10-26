@@ -143,6 +143,7 @@ export const AnonymousChatLayout = () => {
         username: selectedUserProfile.username,
         avatarUrl: selectedUserProfile.avatarUrl,
       });
+      setShowUserProfile(false);
     }
   };
 
