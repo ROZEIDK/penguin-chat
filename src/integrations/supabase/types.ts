@@ -187,6 +187,137 @@ export type Database = {
         }
         Relationships: []
       }
+      email_folders: {
+        Row: {
+          color: string | null
+          created_at: string
+          icon: string | null
+          id: string
+          name: string
+          position: number | null
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name: string
+          position?: number | null
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          position?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      email_group_members: {
+        Row: {
+          email: string
+          group_id: string
+          id: string
+          joined_at: string
+          user_id: string
+        }
+        Insert: {
+          email: string
+          group_id: string
+          id?: string
+          joined_at?: string
+          user_id: string
+        }
+        Update: {
+          email?: string
+          group_id?: string
+          id?: string
+          joined_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "email_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_groups: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          domain: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          domain: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          domain?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      emails: {
+        Row: {
+          body: string
+          created_at: string
+          folder: string | null
+          from_email: string
+          from_user_id: string
+          id: string
+          is_read: boolean | null
+          is_starred: boolean | null
+          subject: string
+          to_email: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          folder?: string | null
+          from_email: string
+          from_user_id: string
+          id?: string
+          is_read?: boolean | null
+          is_starred?: boolean | null
+          subject: string
+          to_email: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          folder?: string | null
+          from_email?: string
+          from_user_id?: string
+          id?: string
+          is_read?: boolean | null
+          is_starred?: boolean | null
+          subject?: string
+          to_email?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       group_members: {
         Row: {
           group_id: string
@@ -274,6 +405,7 @@ export type Database = {
           name: string
           owner_id: string | null
           password_hash: string | null
+          tags: string[] | null
         }
         Insert: {
           created_at?: string
@@ -282,6 +414,7 @@ export type Database = {
           name: string
           owner_id?: string | null
           password_hash?: string | null
+          tags?: string[] | null
         }
         Update: {
           created_at?: string
@@ -290,6 +423,7 @@ export type Database = {
           name?: string
           owner_id?: string | null
           password_hash?: string | null
+          tags?: string[] | null
         }
         Relationships: []
       }
@@ -374,6 +508,8 @@ export type Database = {
           bio: string | null
           created_at: string
           display_name: string | null
+          email_domain: string | null
+          email_username: string | null
           id: string
           is_active: boolean | null
           profile_type: Database["public"]["Enums"]["profile_type"] | null
@@ -385,6 +521,8 @@ export type Database = {
           bio?: string | null
           created_at?: string
           display_name?: string | null
+          email_domain?: string | null
+          email_username?: string | null
           id?: string
           is_active?: boolean | null
           profile_type?: Database["public"]["Enums"]["profile_type"] | null
@@ -396,6 +534,8 @@ export type Database = {
           bio?: string | null
           created_at?: string
           display_name?: string | null
+          email_domain?: string | null
+          email_username?: string | null
           id?: string
           is_active?: boolean | null
           profile_type?: Database["public"]["Enums"]["profile_type"] | null

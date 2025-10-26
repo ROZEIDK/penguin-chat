@@ -8,6 +8,7 @@ export interface Group {
   is_public: boolean;
   password_hash?: string;
   owner_id?: string;
+  tags?: string[];
 }
 
 export interface GroupMessage {
@@ -36,7 +37,7 @@ export const useGroups = () => {
     try {
       const { data, error } = await supabase
         .from('groups')
-        .select('id, name, created_at, is_public, password_hash, owner_id')
+        .select('id, name, created_at, is_public, password_hash, owner_id, tags')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -57,7 +58,7 @@ export const useGroups = () => {
         .from('group_members')
         .select(`
           group_id,
-          groups!inner(id, name, created_at, is_public, password_hash, owner_id)
+          groups!inner(id, name, created_at, is_public, password_hash, owner_id, tags)
         `)
         .eq('username', username)
         .eq('is_active', true);
@@ -71,7 +72,7 @@ export const useGroups = () => {
     }
   };
 
-  const createGroup = async (name: string, password: string | null, isPublic: boolean = false) => {
+  const createGroup = async (name: string, password: string | null, isPublic: boolean = false, tags: string[] = []) => {
     try {
       const username = localStorage.getItem('chat-username');
       if (!username) throw new Error('Username required');
@@ -79,7 +80,8 @@ export const useGroups = () => {
       const groupData: any = { 
         name, 
         is_public: isPublic,
-        owner_id: username
+        owner_id: username,
+        tags: tags
       };
       
       if (password && !isPublic) {

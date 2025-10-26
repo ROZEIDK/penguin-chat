@@ -19,6 +19,8 @@ export const GroupModal = ({ isOpen, onClose, onGroupJoined }: GroupModalProps) 
   const [selectedGroupId, setSelectedGroupId] = useState('');
   const [loading, setLoading] = useState(false);
   const [isPublic, setIsPublic] = useState(false);
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
   
   const { groups, createGroup, joinGroup } = useGroups();
   const { toast } = useToast();
@@ -44,7 +46,7 @@ export const GroupModal = ({ isOpen, onClose, onGroupJoined }: GroupModalProps) 
 
     setLoading(true);
     try {
-      const group = await createGroup(groupName.trim(), isPublic ? null : password, isPublic);
+      const group = await createGroup(groupName.trim(), isPublic ? null : password, isPublic, tags);
       toast({
         title: "Success",
         description: `${isPublic ? 'Public' : 'Private'} group "${groupName}" created successfully!`,
@@ -109,7 +111,20 @@ export const GroupModal = ({ isOpen, onClose, onGroupJoined }: GroupModalProps) 
     setPassword('');
     setSelectedGroupId('');
     setIsPublic(false);
+    setTags([]);
+    setTagInput('');
     onClose();
+  };
+
+  const handleAddTag = () => {
+    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+      setTags([...tags, tagInput.trim()]);
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
   const renderSelectMode = () => (
@@ -153,7 +168,7 @@ export const GroupModal = ({ isOpen, onClose, onGroupJoined }: GroupModalProps) 
             <option value="">Choose a group...</option>
             {groups.map((group) => (
               <option key={group.id} value={group.id}>
-                {group.name} {group.is_public ? '(Public)' : '(Private)'}
+                {group.name} {group.is_public ? '(Public)' : '(Private)'} {group.tags && group.tags.length > 0 ? `[${group.tags.join(', ')}]` : ''}
               </option>
             ))}
           </select>
@@ -222,6 +237,45 @@ export const GroupModal = ({ isOpen, onClose, onGroupJoined }: GroupModalProps) 
             />
           </div>
         )}
+        <div>
+          <Label htmlFor="tags">Tags (optional)</Label>
+          <div className="flex gap-2 mb-2">
+            <Input
+              id="tags"
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              placeholder="Add tags like 'friendly', 'NSFW', etc."
+              onKeyPress={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleAddTag();
+                }
+              }}
+            />
+            <Button type="button" onClick={handleAddTag} variant="outline" size="sm">
+              Add
+            </Button>
+          </div>
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1 px-2 py-1 bg-secondary text-secondary-foreground rounded-md text-sm"
+                >
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveTag(tag)}
+                    className="hover:text-destructive"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="flex gap-2">
           <Button onClick={() => setMode('select')} variant="outline" className="flex-1">
             Back

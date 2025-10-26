@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Send, Hash, Users, Plus, Globe, Image, Smile, X, Crown, MessageCircle } from "lucide-react";
 import { useMessages } from "@/hooks/useMessages";
 import { useGroups, useGroupMessages } from "@/hooks/useGroups";
@@ -285,38 +286,49 @@ export const AnonymousChatLayout = () => {
               {joinedGroups.map((group) => (
                 <div 
                   key={group.id}
-                  className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors group ${
+                  className={`flex flex-col gap-1 p-2 rounded cursor-pointer transition-colors group ${
                     currentGroup?.id === group.id ? 'bg-sidebar-accent' : 'hover:bg-sidebar-accent/50'
                   }`}
                   onClick={() => setCurrentGroup({ id: group.id, name: group.name })}
                 >
-                  <Hash className="w-4 h-4" />
-                  <span className="flex-1 truncate">{group.name}</span>
-                  {group.owner_id === username && (
-                    <div title="You own this server">
-                      <Crown className="w-3 h-3 text-yellow-500" />
+                  <div className="flex items-center gap-2">
+                    <Hash className="w-4 h-4" />
+                    <span className="flex-1 truncate">{group.name}</span>
+                    {group.owner_id === username && (
+                      <div title="You own this server">
+                        <Crown className="w-3 h-3 text-yellow-500" />
+                      </div>
+                    )}
+                    <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
+                      {group.owner_id === username && (
+                        <ServerSettingsDialog 
+                          group={group}
+                          onUpdate={refetchGroups}
+                        />
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 ml-1"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleLeaveGroup(group.id, group.name);
+                        }}
+                        title="Leave server"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                  {group.tags && group.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 ml-6">
+                      {group.tags.map((tag) => (
+                        <Badge key={tag} variant="secondary" className="text-[10px] px-1 py-0 h-4">
+                          {tag}
+                        </Badge>
+                      ))}
                     </div>
                   )}
-                  <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
-                    {group.owner_id === username && (
-                      <ServerSettingsDialog 
-                        group={group}
-                        onUpdate={refetchGroups}
-                      />
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0 ml-1"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleLeaveGroup(group.id, group.name);
-                      }}
-                      title="Leave server"
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
                 </div>
               ))}
               

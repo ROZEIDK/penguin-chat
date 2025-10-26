@@ -19,6 +19,8 @@ export function ServerSettingsDialog({ group, onUpdate }: ServerSettingsDialogPr
   const [groupName, setGroupName] = useState(group.name);
   const [isPublic, setIsPublic] = useState(group.is_public);
   const [password, setPassword] = useState("");
+  const [tags, setTags] = useState<string[]>(group.tags || []);
+  const [tagInput, setTagInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -35,6 +37,7 @@ export function ServerSettingsDialog({ group, onUpdate }: ServerSettingsDialogPr
       const updateData: any = {
         name: groupName,
         is_public: isPublic,
+        tags: tags,
       };
 
       // Only update password if it's provided and group is private
@@ -99,6 +102,17 @@ export function ServerSettingsDialog({ group, onUpdate }: ServerSettingsDialogPr
     }
   };
 
+  const handleAddTag = () => {
+    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+      setTags([...tags, tagInput.trim()]);
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -148,6 +162,47 @@ export function ServerSettingsDialog({ group, onUpdate }: ServerSettingsDialogPr
               />
             </div>
           )}
+
+          <div className="space-y-2">
+            <Label htmlFor="tags" className="text-card-foreground">Server Tags</Label>
+            <div className="flex gap-2 mb-2">
+              <Input
+                id="tags"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                placeholder="Add tags like 'friendly', 'NSFW', etc."
+                className="bg-input border-border text-foreground"
+                onKeyPress={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddTag();
+                  }
+                }}
+              />
+              <Button type="button" onClick={handleAddTag} variant="outline" size="sm">
+                Add
+              </Button>
+            </div>
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 px-2 py-1 bg-secondary text-secondary-foreground rounded-md text-sm"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveTag(tag)}
+                      className="hover:text-destructive"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
 
           <div className="flex gap-2 pt-4">
             <Button 
