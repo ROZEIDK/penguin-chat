@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Send, Hash, Users, Plus, Globe, Image, Smile, X, Crown, MessageCircle } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Send, Hash, Users, Plus, Globe, Image, Smile, X, Crown, MessageCircle, Menu } from "lucide-react";
 import { useMessages } from "@/hooks/useMessages";
 import { useGroups, useGroupMessages } from "@/hooks/useGroups";
 import { useConversations, type DirectMessage } from "@/hooks/useDirectMessages";
@@ -202,168 +203,174 @@ export const AnonymousChatLayout = () => {
     );
   }
 
-  return (
-    <div className="h-screen flex bg-background">
-      {/* Left Sidebar - Info */}
-      <div className="w-64 bg-chat-sidebar text-sidebar-foreground flex flex-col">
-        <div className="p-4 border-b border-sidebar-border">
-          <h2 className="text-xl font-bold">Anonymous Chat</h2>
-          <p className="text-sm text-muted-foreground">Open chatroom for everyone</p>
-        </div>
-        
-        <ScrollArea className="flex-1 p-4">
-          <div className="space-y-4">
-            {/* Direct Messages Section */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Direct Messages
-                </span>
-              </div>
-              {conversations.length > 0 ? (
-                <div className="space-y-1">
-                  {conversations.map((conv) => {
-                    const otherUsername = conv.user1_username === username ? conv.user2_username : conv.user1_username;
-                    return (
-                      <div
-                        key={conv.id}
-                        className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${
-                          activeDMConversation?.id === conv.id ? 'bg-sidebar-accent' : 'hover:bg-sidebar-accent/50'
-                        }`}
-                        onClick={() => setActiveDMConversation({ id: conv.id, username: otherUsername })}
-                      >
-                        <MessageCircle className="w-4 h-4 flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm truncate">{otherUsername}</span>
-                            {conv.unreadCount > 0 && (
-                              <span className="bg-primary text-primary-foreground text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
-                                {conv.unreadCount}
-                              </span>
-                            )}
-                          </div>
-                          {conv.lastMessage && (
-                            <p className="text-xs text-muted-foreground truncate">
-                              {conv.lastMessage}
-                            </p>
+  const SidebarContent = () => (
+    <>
+      <div className="p-4 border-b border-sidebar-border">
+        <h2 className="text-xl font-bold">Anonymous Chat</h2>
+        <p className="text-sm text-muted-foreground">Open chatroom for everyone</p>
+      </div>
+      
+      <ScrollArea className="flex-1 p-4">
+        <div className="space-y-4">
+          {/* Direct Messages Section */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Direct Messages
+              </span>
+            </div>
+            {conversations.length > 0 ? (
+              <div className="space-y-1">
+                {conversations.map((conv) => {
+                  const otherUsername = conv.user1_username === username ? conv.user2_username : conv.user1_username;
+                  return (
+                    <div
+                      key={conv.id}
+                      className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${
+                        activeDMConversation?.id === conv.id ? 'bg-sidebar-accent' : 'hover:bg-sidebar-accent/50'
+                      }`}
+                      onClick={() => setActiveDMConversation({ id: conv.id, username: otherUsername })}
+                    >
+                      <MessageCircle className="w-4 h-4 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm truncate">{otherUsername}</span>
+                          {conv.unreadCount > 0 && (
+                            <span className="bg-primary text-primary-foreground text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
+                              {conv.unreadCount}
+                            </span>
                           )}
                         </div>
+                        {conv.lastMessage && (
+                          <p className="text-xs text-muted-foreground truncate">
+                            {conv.lastMessage}
+                          </p>
+                        )}
                       </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground italic px-2">No conversations yet</p>
-              )}
-            </div>
-
-            {/* Servers Section */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Servers
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowGroupModal(true)}
-                  className="w-6 h-6 p-0"
-                >
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </div>
-              
-              <div 
-                className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${
-                  !currentGroup ? 'bg-sidebar-accent' : 'hover:bg-sidebar-accent/50'
-                }`}
-                onClick={() => setCurrentGroup(null)}
-              >
-                <Globe className="w-4 h-4" />
-                <span>Global Chat</span>
-              </div>
-            
-              {joinedGroups.map((group) => (
-                <div 
-                  key={group.id}
-                  className={`flex flex-col gap-1 p-2 rounded cursor-pointer transition-colors group ${
-                    currentGroup?.id === group.id ? 'bg-sidebar-accent' : 'hover:bg-sidebar-accent/50'
-                  }`}
-                  onClick={() => setCurrentGroup({ id: group.id, name: group.name })}
-                >
-                  <div className="flex items-center gap-2">
-                    <Hash className="w-4 h-4" />
-                    <span className="flex-1 truncate">{group.name}</span>
-                    {group.owner_id === username && (
-                      <div title="You own this server">
-                        <Crown className="w-3 h-3 text-yellow-500" />
-                      </div>
-                    )}
-                    <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
-                      {group.owner_id === username && (
-                        <ServerSettingsDialog 
-                          group={group}
-                          onUpdate={refetchGroups}
-                        />
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0 ml-1"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleLeaveGroup(group.id, group.name);
-                        }}
-                        title="Leave server"
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
                     </div>
-                  </div>
-                  {group.tags && group.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1 ml-6">
-                      {group.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary" className="text-[10px] px-1 py-0 h-4">
-                          {tag}
-                        </Badge>
-                      ))}
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground italic px-2">No conversations yet</p>
+            )}
+          </div>
+
+          {/* Servers Section */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Servers
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowGroupModal(true)}
+                className="w-6 h-6 p-0"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            <div 
+              className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${
+                !currentGroup ? 'bg-sidebar-accent' : 'hover:bg-sidebar-accent/50'
+              }`}
+              onClick={() => setCurrentGroup(null)}
+            >
+              <Globe className="w-4 h-4" />
+              <span>Global Chat</span>
+            </div>
+          
+            {joinedGroups.map((group) => (
+              <div 
+                key={group.id}
+                className={`flex flex-col gap-1 p-2 rounded cursor-pointer transition-colors group ${
+                  currentGroup?.id === group.id ? 'bg-sidebar-accent' : 'hover:bg-sidebar-accent/50'
+                }`}
+                onClick={() => setCurrentGroup({ id: group.id, name: group.name })}
+              >
+                <div className="flex items-center gap-2">
+                  <Hash className="w-4 h-4" />
+                  <span className="flex-1 truncate">{group.name}</span>
+                  {group.owner_id === username && (
+                    <div title="You own this server">
+                      <Crown className="w-3 h-3 text-yellow-500" />
                     </div>
                   )}
+                  <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
+                    {group.owner_id === username && (
+                      <ServerSettingsDialog 
+                        group={group}
+                        onUpdate={refetchGroups}
+                      />
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 ml-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleLeaveGroup(group.id, group.name);
+                      }}
+                      title="Leave server"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
-              ))}
-              
-              {currentGroup && !joinedGroups.find(g => g.id === currentGroup.id) && (
-                <div className="flex items-center gap-2 p-2 rounded bg-sidebar-accent">
-                  <Hash className="w-4 h-4" />
-                  <span>{currentGroup.name}</span>
-                </div>
-              )}
-            </div>
+                {group.tags && group.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 ml-6">
+                    {group.tags.map((tag) => (
+                      <Badge key={tag} variant="secondary" className="text-[10px] px-1 py-0 h-4">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+            
+            {currentGroup && !joinedGroups.find(g => g.id === currentGroup.id) && (
+              <div className="flex items-center gap-2 p-2 rounded bg-sidebar-accent">
+                <Hash className="w-4 h-4" />
+                <span>{currentGroup.name}</span>
+              </div>
+            )}
           </div>
-        </ScrollArea>
-        
-        <div className="p-4 border-t border-sidebar-border">
-          <div className="flex items-center gap-2">
-            <UserProfileDialog />
-            <div className="flex-1">
-              <div className="text-sm font-medium">{username}</div>
-              <div className="text-xs text-muted-foreground">online</div>
-            </div>
-            <UserSettingsDialog />
-          </div>
-            <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              localStorage.removeItem('chat-username');
-              setHasSetUsername(false);
-              setUsername('');
-            }}
-            className="mt-2 text-xs text-muted-foreground hover:text-foreground"
-          >
-            Change Username
-          </Button>
         </div>
+      </ScrollArea>
+      
+      <div className="p-4 border-t border-sidebar-border">
+        <div className="flex items-center gap-2">
+          <UserProfileDialog />
+          <div className="flex-1">
+            <div className="text-sm font-medium">{username}</div>
+            <div className="text-xs text-muted-foreground">online</div>
+          </div>
+          <UserSettingsDialog />
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            localStorage.removeItem('chat-username');
+            setHasSetUsername(false);
+            setUsername('');
+          }}
+          className="mt-2 text-xs text-muted-foreground hover:text-foreground"
+        >
+          Change Username
+        </Button>
+      </div>
+    </>
+  );
+
+  return (
+    <div className="h-screen flex bg-background">
+      {/* Desktop Sidebar */}
+      <div className="hidden md:flex w-64 bg-chat-sidebar text-sidebar-foreground flex-col">
+        <SidebarContent />
       </div>
 
       {/* Main Chat Area */}
@@ -371,6 +378,17 @@ export const AnonymousChatLayout = () => {
         {/* Header */}
         <div className="bg-card border-b border-border p-4">
           <div className="flex items-center gap-2">
+            {/* Mobile Menu */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-64 p-0 bg-chat-sidebar text-sidebar-foreground">
+                <SidebarContent />
+              </SheetContent>
+            </Sheet>
             {currentGroup ? (
               <>
                 <Hash className="w-5 h-5 text-muted-foreground" />
@@ -413,7 +431,7 @@ export const AnonymousChatLayout = () => {
         </ScrollArea>
 
         {/* Input Area */}
-        <div className="border-t border-border p-4 bg-card space-y-4">
+        <div className="border-t border-border p-3 md:p-4 bg-card space-y-4 safe-area-bottom">
           {showImageUpload && (
             <ImageUpload 
               onImageSelect={handleImageSelect}
@@ -443,8 +461,8 @@ export const AnonymousChatLayout = () => {
             </div>
           )}
           
-          <div className="flex gap-2">
-            <div className="flex gap-1">
+          <div className="flex gap-2 flex-wrap md:flex-nowrap">
+            <div className="flex gap-1 flex-shrink-0">
               <Button
                 variant="ghost"
                 size="icon"
@@ -472,10 +490,10 @@ export const AnonymousChatLayout = () => {
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               placeholder={pendingImageUrl ? "Add a caption..." : `Message as ${username}...`}
-              className="flex-1"
+              className="flex-1 min-w-0 text-base"
               onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
             />
-            <Button onClick={handleSendMessage} size="icon">
+            <Button onClick={handleSendMessage} size="icon" className="flex-shrink-0">
               <Send className="w-4 h-4" />
             </Button>
           </div>

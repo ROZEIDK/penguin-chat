@@ -37,9 +37,9 @@ export function DirectMessagesSidebar({
   };
 
   return (
-    <div className="w-80 bg-card border-l border-border flex flex-col h-full">
+    <div className="w-full md:w-80 bg-card border-l border-border flex flex-col h-full">
       {/* Header */}
-      <div className="p-4 border-b border-border flex items-center justify-between">
+      <div className="p-3 md:p-4 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Avatar className="h-8 w-8">
             {otherUserAvatar && (
@@ -53,8 +53,8 @@ export function DirectMessagesSidebar({
               {otherUsername?.charAt(0).toUpperCase() || 'U'}
             </AvatarFallback>
           </Avatar>
-          <div>
-            <h3 className="font-semibold text-card-foreground text-sm">{otherUsername}</h3>
+          <div className="min-w-0">
+            <h3 className="font-semibold text-card-foreground text-sm truncate">{otherUsername}</h3>
             <p className="text-xs text-muted-foreground">Direct Message</p>
           </div>
         </div>
@@ -62,14 +62,14 @@ export function DirectMessagesSidebar({
           variant="ghost"
           size="icon"
           onClick={onClose}
-          className="h-8 w-8"
+          className="h-8 w-8 flex-shrink-0"
         >
           <X className="h-4 w-4" />
         </Button>
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1 p-3 md:p-4">
         {loading ? (
           <div className="text-center text-muted-foreground text-sm">Loading messages...</div>
         ) : messages.length === 0 ? (
@@ -84,7 +84,7 @@ export function DirectMessagesSidebar({
                 className={`flex ${msg.sender_username === currentUsername ? 'justify-end' : 'justify-start'}`}
               >
                 <div 
-                  className={`max-w-[80%] rounded-lg p-2 ${
+                  className={`max-w-[85%] md:max-w-[80%] rounded-lg p-2 ${
                     msg.sender_username === currentUsername 
                       ? 'bg-primary text-primary-foreground' 
                       : 'bg-muted text-foreground'
@@ -97,7 +97,7 @@ export function DirectMessagesSidebar({
                       className="max-w-full rounded mb-1"
                     />
                   )}
-                  <p className="text-sm">{msg.content}</p>
+                  <p className="text-sm break-words">{msg.content}</p>
                   <p className="text-xs opacity-70 mt-1">
                     {format(new Date(msg.created_at), 'h:mm a')}
                   </p>
@@ -109,16 +109,16 @@ export function DirectMessagesSidebar({
       </ScrollArea>
 
       {/* Input */}
-      <div className="border-t border-border p-4">
+      <div className="border-t border-border p-3 md:p-4 safe-area-bottom">
         <div className="flex gap-2">
           <Input
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             placeholder={`Message ${otherUsername}...`}
-            className="flex-1"
+            className="flex-1 text-base"
             onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
           />
-          <Button onClick={handleSendMessage} size="icon">
+          <Button onClick={handleSendMessage} size="icon" className="flex-shrink-0">
             <Send className="w-4 h-4" />
           </Button>
         </div>

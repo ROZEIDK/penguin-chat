@@ -106,4 +106,20 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Safe area padding for mobile devices */
+  .safe-area-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  
+  /* Prevent zoom on input focus on mobile */
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+  
+  @media (min-width: 768px) {
+    input, textarea, select {
+      font-size: 0.875rem !important;
+    }
+  }
 }
