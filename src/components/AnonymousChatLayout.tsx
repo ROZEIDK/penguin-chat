@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Send, Hash, Users, Plus, Globe, Image, Smile, X, Crown, MessageCircle, Menu } from "lucide-react";
+import { Send, Hash, Users, Plus, Globe, Image, Smile, X, Crown, MessageCircle, Menu, Sparkles } from "lucide-react";
 import { useMessages } from "@/hooks/useMessages";
 import { useGroups, useGroupMessages } from "@/hooks/useGroups";
 import { useConversations, type DirectMessage } from "@/hooks/useDirectMessages";
@@ -21,6 +21,7 @@ import { UserSettingsDialog } from "./UserSettingsDialog";
 import { ServerSettingsDialog } from "./ServerSettingsDialog";
 import { UserProfileView } from "./UserProfileView";
 import { DirectMessagesSidebar } from "./DirectMessagesSidebar";
+import { ImageGenerationDialog } from "./ImageGenerationDialog";
 
 export const AnonymousChatLayout = () => {
   const [inputMessage, setInputMessage] = useState("");
@@ -34,6 +35,7 @@ export const AnonymousChatLayout = () => {
   const [selectedUserProfile, setSelectedUserProfile] = useState<{ username: string; avatarUrl?: string } | null>(null);
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [activeDMConversation, setActiveDMConversation] = useState<{ id: string; username: string; avatarUrl?: string } | null>(null);
+  const [showAIImageDialog, setShowAIImageDialog] = useState(false);
   
   const { messages: globalMessages, loading: globalLoading, sendMessage: sendGlobalMessage } = useMessages();
   const { messages: groupMessages, loading: groupLoading, sendMessage: sendGroupMessage } = useGroupMessages(currentGroup?.id || null);
@@ -474,6 +476,16 @@ export const AnonymousChatLayout = () => {
               >
                 <Image className="w-4 h-4" />
               </Button>
+              {currentGroup && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowAIImageDialog(true)}
+                  title="Generate AI Image"
+                >
+                  <Sparkles className="w-4 h-4" />
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="icon"
@@ -549,6 +561,12 @@ export const AnonymousChatLayout = () => {
         isOpen={showGroupModal}
         onClose={() => setShowGroupModal(false)}
         onGroupJoined={handleGroupJoined}
+      />
+
+      <ImageGenerationDialog
+        open={showAIImageDialog}
+        onOpenChange={setShowAIImageDialog}
+        onImageGenerated={(imageUrl) => setPendingImageUrl(imageUrl)}
       />
 
       {selectedUserProfile && (
