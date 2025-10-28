@@ -23,6 +23,7 @@ import { UserProfileView } from "./UserProfileView";
 import { DirectMessagesSidebar } from "./DirectMessagesSidebar";
 import { ImageGenerationDialog } from "./ImageGenerationDialog";
 import { detectCrisisContent, CRISIS_BOT_USERNAME } from "@/lib/crisisDetection";
+import { useActivityTracker, CHECK_IN_MESSAGE } from "@/hooks/useActivityTracker";
 
 export const AnonymousChatLayout = () => {
   const [inputMessage, setInputMessage] = useState("");
@@ -43,6 +44,7 @@ export const AnonymousChatLayout = () => {
   const { joinedGroups, leaveGroup, refetch: refetchGroups } = useGroups();
   const { conversations, createConversation, refetch: refetchConversations } = useConversations(username);
   const { toast } = useToast();
+  const { shouldShowCheckIn, resetCheckIn } = useActivityTracker(username);
   
   const messages = currentGroup ? groupMessages : globalMessages;
   const messagesLoading = currentGroup ? groupLoading : globalLoading;
@@ -56,6 +58,32 @@ export const AnonymousChatLayout = () => {
       setHasSetUsername(true);
     }
   }, []);
+
+  // Handle inactivity check-in
+  useEffect(() => {
+    if (shouldShowCheckIn && username && conversations.length > 0) {
+      const crisisConversation = conversations.find(c => c.user2_username === CRISIS_BOT_USERNAME);
+      
+      if (crisisConversation) {
+        // Open the crisis bot conversation and show notification
+        setActiveDMConversation({
+          id: crisisConversation.id,
+          username: CRISIS_BOT_USERNAME,
+        });
+        
+        // Set a flag for DirectMessagesSidebar to show the check-in message
+        localStorage.setItem('showCheckInMessage', 'true');
+        
+        toast({
+          title: "💙 Checking In",
+          description: "The Crisis Support Bot sent you a message. We care about you!",
+          duration: 6000,
+        });
+        
+        resetCheckIn();
+      }
+    }
+  }, [shouldShowCheckIn, username, conversations, resetCheckIn, toast]);
 
   // Listen for new DMs and show notifications
   useEffect(() => {

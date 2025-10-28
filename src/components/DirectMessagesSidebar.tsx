@@ -8,6 +8,7 @@ import { Send, X, Heart } from "lucide-react";
 import { useDirectMessages } from "@/hooks/useDirectMessages";
 import { useAICrisisBot, type AIChatMessage } from "@/hooks/useAICrisisBot";
 import { format } from "date-fns";
+import { CHECK_IN_MESSAGE } from "@/hooks/useActivityTracker";
 
 interface DirectMessagesSidebarProps {
   conversationId: string | null;
@@ -32,6 +33,18 @@ export function DirectMessagesSidebar({
   
   const messages = isAIBot ? aiMessages : dmMessages;
   const loading = isAIBot ? aiLoading : dmLoading;
+
+  // Check for check-in message flag
+  useEffect(() => {
+    if (isAIBot) {
+      const shouldShowCheckIn = localStorage.getItem('showCheckInMessage');
+      if (shouldShowCheckIn === 'true') {
+        // The check-in message will be displayed as part of the AI bot's initial messages
+        // by modifying the useAICrisisBot hook
+        localStorage.removeItem('showCheckInMessage');
+      }
+    }
+  }, [isAIBot]);
 
   const handleSendMessage = async () => {
     if (inputMessage.trim()) {

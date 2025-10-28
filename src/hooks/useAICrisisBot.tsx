@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { CHECK_IN_MESSAGE } from './useActivityTracker';
 
 export interface AIChatMessage {
   id: string;
@@ -8,15 +9,33 @@ export interface AIChatMessage {
   created_at: string;
 }
 
-export const useAICrisisBot = () => {
-  const [messages, setMessages] = useState<AIChatMessage[]>([
+const getInitialMessages = (): AIChatMessage[] => {
+  const shouldShowCheckIn = localStorage.getItem('showCheckInMessage');
+  
+  if (shouldShowCheckIn === 'true') {
+    localStorage.removeItem('showCheckInMessage');
+    return [
+      {
+        id: 'checkin',
+        role: 'assistant',
+        content: CHECK_IN_MESSAGE,
+        created_at: new Date().toISOString(),
+      }
+    ];
+  }
+  
+  return [
     {
       id: 'welcome',
       role: 'assistant',
       content: "Hi, I'm here to support you. If you're going through a difficult time, you can talk to me. I'm here to listen without judgment. How are you feeling right now?",
       created_at: new Date().toISOString(),
     }
-  ]);
+  ];
+};
+
+export const useAICrisisBot = () => {
+  const [messages, setMessages] = useState<AIChatMessage[]>(getInitialMessages);
   const [loading, setLoading] = useState(false);
 
   const sendMessage = async (content: string, senderUsername: string) => {
