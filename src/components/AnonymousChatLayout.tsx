@@ -22,6 +22,7 @@ import { ServerSettingsDialog } from "./ServerSettingsDialog";
 import { UserProfileView } from "./UserProfileView";
 import { DirectMessagesSidebar } from "./DirectMessagesSidebar";
 import { ImageGenerationDialog } from "./ImageGenerationDialog";
+import { detectCrisisContent, CRISIS_BOT_USERNAME } from "@/lib/crisisDetection";
 
 export const AnonymousChatLayout = () => {
   const [inputMessage, setInputMessage] = useState("");
@@ -98,6 +99,24 @@ export const AnonymousChatLayout = () => {
   const handleSendMessage = async () => {
     if (inputMessage.trim() && username.trim()) {
       try {
+        // Detect crisis content
+        if (detectCrisisContent(inputMessage)) {
+          toast({
+            title: "🆘 Support is Available",
+            description: "We noticed your message may indicate you're struggling. Please check your DMs - our Crisis Support Bot is here to help.",
+            duration: 8000,
+          });
+          
+          // Find or create crisis bot conversation
+          const crisisBot = conversations.find(c => c.user2_username === CRISIS_BOT_USERNAME);
+          if (crisisBot) {
+            setActiveDMConversation({
+              id: crisisBot.id,
+              username: crisisBot.user2_username,
+            });
+          }
+        }
+        
         if (pendingImageUrl) {
           await sendMessage(inputMessage || "Image", username.trim(), 'image', pendingImageUrl);
           setPendingImageUrl(null);
