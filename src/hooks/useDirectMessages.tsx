@@ -177,7 +177,19 @@ export const useConversations = (username: string | null) => {
         })
       );
 
-      setConversations(conversationsWithUnread);
+      // Add the AI Crisis Support Bot as a special conversation
+      const aiBot: ConversationWithUnread = {
+        id: 'ai-crisis-bot',
+        user1_username: username,
+        user2_username: 'Crisis Support Bot 🆘',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        unreadCount: 0,
+        lastMessage: 'Hi, I\'m here to help if you\'re going through a difficult time.',
+        lastMessageAt: new Date().toISOString(),
+      };
+
+      setConversations([aiBot, ...conversationsWithUnread]);
     } catch (error) {
       console.error('Error fetching conversations:', error);
     } finally {

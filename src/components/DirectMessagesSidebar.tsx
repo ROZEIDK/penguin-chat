@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Send, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Send, X, Heart } from "lucide-react";
 import { useDirectMessages } from "@/hooks/useDirectMessages";
+import { useAICrisisBot, type AIChatMessage } from "@/hooks/useAICrisisBot";
 import { format } from "date-fns";
 
 interface DirectMessagesSidebarProps {
@@ -23,12 +25,22 @@ export function DirectMessagesSidebar({
   onClose 
 }: DirectMessagesSidebarProps) {
   const [inputMessage, setInputMessage] = useState("");
-  const { messages, loading, sendMessage } = useDirectMessages(conversationId);
+  const isAIBot = conversationId === 'ai-crisis-bot';
+  
+  const { messages: dmMessages, loading: dmLoading, sendMessage: sendDM } = useDirectMessages(isAIBot ? null : conversationId);
+  const { messages: aiMessages, loading: aiLoading, sendMessage: sendAI } = useAICrisisBot();
+  
+  const messages = isAIBot ? aiMessages : dmMessages;
+  const loading = isAIBot ? aiLoading : dmLoading;
 
   const handleSendMessage = async () => {
-    if (inputMessage.trim() && conversationId) {
+    if (inputMessage.trim()) {
       try {
-        await sendMessage(inputMessage, currentUsername);
+        if (isAIBot) {
+          await sendAI(inputMessage, currentUsername);
+        } else if (conversationId) {
+          await sendDM(inputMessage, currentUsername);
+        }
         setInputMessage("");
       } catch (error) {
         console.error('Error sending message:', error);
@@ -42,20 +54,34 @@ export function DirectMessagesSidebar({
       <div className="p-3 md:p-4 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Avatar className="h-8 w-8">
-            {otherUserAvatar && (
+            {isAIBot ? (
+              <AvatarFallback className="bg-gradient-to-br from-rose-500 to-pink-500 text-white">
+                <Heart className="h-4 w-4" />
+              </AvatarFallback>
+            ) : otherUserAvatar ? (
               <img 
                 src={otherUserAvatar} 
                 alt={`${otherUsername}'s avatar`}
                 className="w-full h-full object-cover rounded-full"
               />
+            ) : (
+              <AvatarFallback className="bg-primary text-primary-foreground">
+                {otherUsername?.charAt(0).toUpperCase() || 'U'}
+              </AvatarFallback>
             )}
-            <AvatarFallback className="bg-primary text-primary-foreground">
-              {otherUsername?.charAt(0).toUpperCase() || 'U'}
-            </AvatarFallback>
           </Avatar>
           <div className="min-w-0">
-            <h3 className="font-semibold text-card-foreground text-sm truncate">{otherUsername}</h3>
-            <p className="text-xs text-muted-foreground">Direct Message</p>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-card-foreground text-sm truncate">{otherUsername}</h3>
+              {isAIBot && (
+                <Badge variant="secondary" className="text-xs bg-gradient-to-r from-rose-500/20 to-pink-500/20 border-rose-500/30">
+                  AI Support
+                </Badge>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {isAIBot ? '24/7 Crisis Support' : 'Direct Message'}
+            </p>
           </div>
         </div>
         <Button
@@ -78,32 +104,40 @@ export function DirectMessagesSidebar({
           </div>
         ) : (
           <div className="space-y-3">
-            {messages.map((msg) => (
-              <div 
-                key={msg.id}
-                className={`flex ${msg.sender_username === currentUsername ? 'justify-end' : 'justify-start'}`}
-              >
+            {messages.map((msg) => {
+              const isUser = isAIBot 
+                ? (msg as AIChatMessage).role === 'user'
+                : 'sender_username' in msg && msg.sender_username === currentUsername;
+              
+              return (
                 <div 
-                  className={`max-w-[85%] md:max-w-[80%] rounded-lg p-2 ${
-                    msg.sender_username === currentUsername 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'bg-muted text-foreground'
-                  }`}
+                  key={msg.id}
+                  className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}
                 >
-                  {msg.message_type === 'image' && msg.image_url && (
-                    <img 
-                      src={msg.image_url} 
-                      alt="Shared" 
-                      className="max-w-full rounded mb-1"
-                    />
-                  )}
-                  <p className="text-sm break-words">{msg.content}</p>
-                  <p className="text-xs opacity-70 mt-1">
-                    {format(new Date(msg.created_at), 'h:mm a')}
-                  </p>
+                  <div 
+                    className={`max-w-[85%] md:max-w-[80%] rounded-lg p-2 ${
+                      isUser
+                        ? 'bg-primary text-primary-foreground' 
+                        : isAIBot
+                        ? 'bg-gradient-to-br from-rose-500/10 to-pink-500/10 border border-rose-500/20 text-foreground'
+                        : 'bg-muted text-foreground'
+                    }`}
+                  >
+                    {'message_type' in msg && msg.message_type === 'image' && msg.image_url && (
+                      <img 
+                        src={msg.image_url} 
+                        alt="Shared" 
+                        className="max-w-full rounded mb-1"
+                      />
+                    )}
+                    <p className="text-sm break-words whitespace-pre-wrap">{msg.content}</p>
+                    <p className="text-xs opacity-70 mt-1">
+                      {format(new Date(msg.created_at), 'h:mm a')}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </ScrollArea>
