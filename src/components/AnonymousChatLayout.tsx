@@ -455,6 +455,12 @@ export const AnonymousChatLayout = () => {
                 </div>
               </>
             )}
+            <Button
+              onClick={() => window.location.href = 'https://ashley-and-andys-complicated-love-life.lovable.app'}
+              className="ml-auto"
+            >
+              Visit Love Story
+            </Button>
           </div>
         </div>
 
