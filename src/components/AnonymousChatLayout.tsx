@@ -315,7 +315,8 @@ export const AnonymousChatLayout = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowGroupModal(true)}
-                className="w-6 h-6 p-0"
+                className="w-6 h-6 p-0 hover:bg-sidebar-accent text-sidebar-foreground opacity-70 hover:opacity-100"
+                title="Add Server"
               >
                 <Plus className="w-4 h-4" />
               </Button>
