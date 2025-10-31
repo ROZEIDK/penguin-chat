@@ -470,8 +470,17 @@ export const AnonymousChatLayout = () => {
               </>
             )}
             <Button
-              onClick={() => window.location.href = 'https://ashley-and-andys-complicated-love-life.lovable.app'}
+              variant="outline"
+              size="icon"
+              onClick={() => setShowGroupModal(true)}
               className="ml-auto"
+              title="Add Server"
+              aria-label="Add Server"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+            <Button
+              onClick={() => window.location.href = 'https://ashley-and-andys-complicated-love-life.lovable.app'}
             >
               Visit Love Story
             </Button>
