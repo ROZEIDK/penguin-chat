@@ -122,4 +122,9 @@ All colors MUST be HSL.
       font-size: 0.875rem !important;
     }
   }
+  
+  /* Hide Lovable badge */
+  #lovable-badge {
+    display: none !important;
+  }
 }
