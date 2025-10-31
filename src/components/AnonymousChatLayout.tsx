@@ -255,8 +255,21 @@ export const AnonymousChatLayout = () => {
   const SidebarContent = () => (
     <>
       <div className="p-4 border-b border-sidebar-border">
-        <h2 className="text-xl font-bold">Anonymous Chat</h2>
-        <p className="text-sm text-muted-foreground">Open chatroom for everyone</p>
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <h2 className="text-xl font-bold">Anonymous Chat</h2>
+            <p className="text-sm text-muted-foreground">Open chatroom for everyone</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowGroupModal(true)}
+            className="h-8 px-2"
+            title="Add Server"
+          >
+            <Plus className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
       
       <ScrollArea className="flex-1 p-4">
