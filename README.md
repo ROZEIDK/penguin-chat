@@ -16,4 +16,13 @@ Every server includes a **trained 988 crisis bot** that detects distress signals
 
 ### 🛠 **Built for Developers & Communities**
 ```bash
-  
+
+  Note: The 988 crisis prevention bot requires:
+
+Your own backend server
+
+Custom API keys
+
+Your own database
+
+For safety reasons, this bot is not included in the open-source build by default.
